@@ -1,0 +1,2 @@
+# miners
+Minesweeper in Rust.
