@@ -57,9 +57,7 @@ impl Minesweeper {
         columns_amount: u8,
         mines_amount: u16,
     ) -> Result<Self, MinesweeperError> {
-        let mut field = Field::new(rows_amount, columns_amount)?;
-        field.insert_mines(mines_amount, Some((1, 1)))?;
-        let field = Field::new(rows_amount, columns_amount)?;
+        let field = Field::new(rows_amount, columns_amount, mines_amount)?;
 
         Ok(Minesweeper {
             field,
@@ -97,8 +95,7 @@ impl Minesweeper {
             MinesweeperAction::OpenCell(cell_position) => {
                 if let MinesweeperStatus::On = self.status {
                 } else {
-                    self.field
-                        .insert_mines(self.mines_amount, Some(cell_position))?;
+                    self.field.populate_with_mines(Some(cell_position))?;
 
                     self.status = MinesweeperStatus::On;
 

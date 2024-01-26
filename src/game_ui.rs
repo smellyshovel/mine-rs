@@ -548,13 +548,13 @@ fn render_popup(frame: &mut Frame, lines: impl IntoIterator<Item = String>, bord
 /// The function takes as input the library-representation of the cell and a flag which suggests whether the cell is
 /// currently selected or not. Based on that information, it decides what text to render and which colors to use.
 fn build_cell_widget(cell: &Cell, selected: bool, game_lost: bool) -> impl Widget {
-    let symbol = if game_lost && cell.is_flagged() && !cell.is_mine() {
+    let symbol = if game_lost && cell.is_flagged() && !cell.is_mined() {
         WRONG_CHOICE_SYMBOL.to_string()
     } else if !cell.is_open() && !cell.is_flagged() {
         CLOSED_CELL_SYMBOL.to_string()
     } else if cell.is_flagged() {
         FLAG_SYMBOL.to_string()
-    } else if let Some(adjacent_mines_amount) = cell.get_adjacent_mines_amount() {
+    } else if let Some(adjacent_mines_amount) = cell.get_mines_around_amount() {
         if adjacent_mines_amount == 0 {
             "   ".to_string()
         } else {

@@ -257,14 +257,6 @@ impl AppMenu {
     }
 
     fn create_new_game(&self) -> Result<AppGame, MinesweeperError> {
-        // return an error if the required amount of mines is less than 1 or is more than the total amount of cells
-        // minus 1 (there should always at least one mine and at least one cell without a mine)
-        if self.mines_amount < 1
-            || self.mines_amount > (self.rows_amount as u16 * self.columns_amount as u16 - 1)
-        {
-            return Err(FieldError::InvalidMinesAmount.into());
-        }
-
         AppGame::new(self.rows_amount, self.columns_amount, self.mines_amount)
     }
 
