@@ -7,15 +7,15 @@ use std::fmt::{Debug, Display, Formatter};
 /// The enum represents all the variants of what can possibly go wrong when working with fields.
 #[derive(Debug, PartialEq)]
 pub enum FieldError {
-    /// Used when the user tries to create a field with less than 2 cells total.
+    /// Used when the user tries to create a field with less than two cells total.
     NotEnoughCells,
-    /// Used when the required amount of mines is less than 1 or is more than the total amount of cells minus 1 (there
+    /// Used when the required number of mines is less than 1 or is more than the total number of cells minus 1 (there
     /// should always be at least one mine and at least one cell without a mine).
     ///
-    /// The value represents the maximum allowed amount of mines for the field with the given dimensions.
+    /// The value represents the maximum allowed number of mines for the field with the given dimensions.
     InvalidMinesAmount(u16),
     /// Used when the user tries to populate the field with mines and tells it to except some cell, but that cell's
-    /// position is incorrect (i.e. the row's and/or the column's indices are out of the field's dimensions).
+    /// position is incorrect (i.e., the row's and/or the column's indices are out of the field's dimensions).
     ///
     /// The value represents the requested-to-except cell's row and column indices respectively.
     InvalidExceptedCellPosition((u8, u8)),
@@ -136,10 +136,13 @@ impl Field {
 
         // Fill the first `number_of_mines` cells with mines and store them in a vector.
         let cells_with_mines = flattened_field
-            .iter_mut()
+            .into_iter()
             .take(self.mines_amount as usize)
-            .map(|cell| cell.mine())
-            .collect::<Vec<Cell>>();
+            .map(|cell| {
+                cell.mine();
+                cell
+            })
+            .collect::<Vec<&mut Cell>>();
 
         // Increment the number of mines around a cell for all the cells which are adjacent to those with mines.
         let adjacent_cells_positions = cells_with_mines
@@ -211,33 +214,33 @@ impl Field {
 
     ///
     pub fn open_surrounding_cells(&mut self, (row_index, column_index): (u8, u8)) {
-        // // get the width and the height of the field
-        //
-        // if let Some(target_cell) = self.get_cell((row_index, column_index)) {
-        //     let adjacent_cells_indices = target_cell.get_adjacent_cells_positions();
-        //
-        //     let flagged_adjacent_cells_amount = adjacent_cells_indices
-        //         .iter()
-        //         .filter_map(|(row_index, column_index)| {
-        //             self.grid
-        //                 .get(*row_index as usize)
-        //                 .and_then(|row| row.get(*column_index as usize))
-        //         })
-        //         .filter(|adjacent_cell| adjacent_cell.is_flagged())
-        //         .collect::<Vec<&Cell>>()
-        //         .len() as u8;
-        //
-        //     if target_cell.is_open()
-        //         && target_cell.get_mines_around_amount().is_some()
-        //         && flagged_adjacent_cells_amount == target_cell.get_mines_around_amount().unwrap()
-        //     {
-        //         adjacent_cells_indices
-        //             .into_iter()
-        //             .for_each(|adjacent_cell_position| {
-        //                 self.open_cell(adjacent_cell_position);
-        //             });
-        //     };
-        // }
+        // get the width and the height of the field
+
+        if let Some(target_cell) = self.get_cell((row_index, column_index)) {
+            let adjacent_cells_indices = target_cell.get_adjacent_cells_positions();
+
+            let flagged_adjacent_cells_amount = adjacent_cells_indices
+                .iter()
+                .filter_map(|(row_index, column_index)| {
+                    self.grid
+                        .get(*row_index as usize)
+                        .and_then(|row| row.get(*column_index as usize))
+                })
+                .filter(|adjacent_cell| adjacent_cell.is_flagged())
+                .collect::<Vec<&Cell>>()
+                .len() as u8;
+
+            if target_cell.is_open()
+                && target_cell.get_mines_around_amount().is_some()
+                && flagged_adjacent_cells_amount == target_cell.get_mines_around_amount().unwrap()
+            {
+                adjacent_cells_indices
+                    .into_iter()
+                    .for_each(|adjacent_cell_position| {
+                        self.open_cell(adjacent_cell_position);
+                    });
+            };
+        }
     }
 
     pub fn flag_cell(&mut self, (row_index, columns_index): (u8, u8)) {
@@ -330,492 +333,3 @@ impl Display for Field {
         write!(f, "")
     }
 }
-
-// #[cfg(test)]
-// mod test {
-//     use super::cell::Cell;
-//     use super::{Field, FieldError};
-//
-//     #[test]
-//     fn new_creates_a_field_with_specified_dimensions() {
-//         let asymmetrical_field = Field::new(2, 3);
-//
-//         assert_eq!(
-//             asymmetrical_field,
-//             Ok(Field(vec![
-//                 vec![Cell::new((0, 0)), Cell::new((0, 1)), Cell::new((0, 2))],
-//                 vec![Cell::new((1, 0)), Cell::new((1, 1)), Cell::new((1, 2))],
-//             ]))
-//         );
-//     }
-//
-//     #[test]
-//     fn new_wont_create_a_field_with_the_size_less_than_two() {
-//         let empty_field = Field::new(0, 0);
-//         assert_eq!(empty_field, Err(FieldError::NotEnoughCells));
-//
-//         let no_rows_field = Field::new(1, 0);
-//         assert_eq!(no_rows_field, Err(FieldError::NotEnoughCells));
-//
-//         let no_columns_field = Field::new(0, 1);
-//         assert_eq!(no_columns_field, Err(FieldError::NotEnoughCells));
-//
-//         let one_cell_field = Field::new(1, 1);
-//         assert_eq!(one_cell_field, Err(FieldError::NotEnoughCells));
-//
-//         let two_cells_field = Field::new(1, 2);
-//         assert!(two_cells_field.is_ok());
-//     }
-//
-//     #[test]
-//     fn get_size_correctly_calculates_field_dimensions() {
-//         let regular_field = Field::new(2, 3).unwrap();
-//         assert_eq!(regular_field.get_size(), (2, 3, 2 * 3));
-//
-//         let another_field = Field::new(81, 241).unwrap();
-//         assert_eq!(another_field.get_size(), (81, 241, 81 * 241));
-//     }
-//
-//     #[test]
-//     fn insert_mines_inserts_a_correct_amount_of_mines() {
-//         let desired_amount_of_mines = 9;
-//
-//         let mut field = Field::new(9, 9).unwrap();
-//         field.insert_mines(desired_amount_of_mines, None).unwrap();
-//
-//         let real_amount_of_mines = field
-//             .0
-//             .iter()
-//             .flatten()
-//             .map(|cell| if let true = cell.is_mined() { 1 } else { 0 })
-//             .sum();
-//
-//         assert_eq!(desired_amount_of_mines, real_amount_of_mines);
-//     }
-//
-//     #[test]
-//     fn insert_mines_respects_the_excepted_cell() {
-//         for _ in 0..1000 {
-//             let mut field = Field::new(9, 9).unwrap();
-//             field.insert_mines(80, Some((0, 0))).unwrap();
-//
-//             assert!(!field.0[0][0].is_mined());
-//         }
-//     }
-//
-//     #[test]
-//     fn insert_mines_errors_when_excepted_index_is_out_of_bounds() {
-//         let mut field = Field::new(9, 9).unwrap();
-//         let result = field.insert_mines(9, Some((8, 9)));
-//         assert_eq!(result, Err(FieldError::InvalidCellPosition((8, 9))));
-//
-//         let mut field = Field::new(9, 9).unwrap();
-//         let result = field.insert_mines(9, Some((9, 8)));
-//         assert_eq!(result, Err(FieldError::InvalidCellPosition((9, 8))));
-//
-//         let mut field = Field::new(9, 9).unwrap();
-//         let result = field.insert_mines(9, Some((9, 9)));
-//         assert_eq!(result, Err(FieldError::InvalidCellPosition((9, 9))));
-//     }
-//
-//     #[test]
-//     fn insert_mines_errors_when_less_than_one_mine_is_requested() {
-//         let mut field = Field::new(9, 9).unwrap();
-//         let result = field.insert_mines(0, None);
-//         assert_eq!(result, Err(FieldError::InvalidMinesAmount));
-//     }
-//
-//     #[test]
-//     fn insert_mines_errors_when_too_many_mines_are_requested() {
-//         let mut field = Field::new(9, 9).unwrap();
-//         let result = field.insert_mines(81, None);
-//         assert_eq!(result, Err(FieldError::InvalidMinesAmount));
-//     }
-//
-//     #[test]
-//     fn insert_mines_errors_on_double_invocation() {
-//         let mut field = Field::new(9, 9).unwrap();
-//         field.insert_mines(9, Some((0, 0))).unwrap();
-//
-//         let result = field.insert_mines(9, None);
-//         assert_eq!(result, Err(FieldError::MinesAlreadyExist));
-//     }
-//
-//     #[test]
-//     fn insert_numbers_correctly_inserts_numbers() {
-//         fn b(position: (u8, u8)) -> Cell {
-//             // build a mined cell (a bomb)
-//             let mut cell = Cell::new(position);
-//             cell.mine();
-//             cell
-//         }
-//
-//         fn n(position: (u8, u8), number: u8) -> Cell {
-//             // builds a cell with a number
-//             let mut cell = Cell::new(position);
-//             (0..number).for_each(|_| cell.increment_adjacent_mines_amount());
-//             cell
-//         }
-//
-//         let mut field_without_numbers = Field(vec![
-//             vec![b((0, 0)), n((0, 1), 0), n((0, 2), 0)],
-//             vec![n((1, 0), 0), n((1, 1), 0), b((1, 2))],
-//             vec![n((2, 0), 0), n((2, 1), 0), n((2, 2), 0)],
-//         ]);
-//
-//         field_without_numbers.insert_numbers(vec![
-//             field_without_numbers.0[0][0],
-//             field_without_numbers.0[1][2],
-//         ]);
-//
-//         let reference = Field(vec![
-//             vec![b((0, 0)), n((0, 1), 2), n((0, 2), 1)],
-//             vec![n((1, 0), 1), n((1, 1), 2), b((1, 2))],
-//             vec![n((2, 0), 0), n((2, 1), 1), n((2, 2), 1)],
-//         ]);
-//
-//         assert_eq!(field_without_numbers, reference);
-//     }
-//
-//     fn helper_assert_for_cells(
-//         field: Field,
-//         cells_positions: Vec<(u8, u8)>,
-//         should_be_open: bool,
-//     ) -> Field {
-//         cells_positions
-//             .iter()
-//             .for_each(|(row_index, column_index)| {
-//                 assert_eq!(
-//                     field.0[*row_index as usize][*column_index as usize].is_open(),
-//                     should_be_open
-//                 );
-//             });
-//
-//         field
-//     }
-//
-//     #[test]
-//     fn open_cell_correctly_opens_cell_when_the_target_cell_is_empty() {
-//         // Such a field, when opening the (1, 1) cell
-//         /*
-//         ⬜  ⬜  ⬜  1️ 💣
-//         ⬜  ⬜  ⬜  2️ 2️
-//         ⬜  ⬜  ⬜  1️ 💣
-//         ⬜  1️  1️  2️ 1️
-//         ⬜  1️  💣  1️ ⬜
-//          */
-//
-//         // must produce the following result
-//         /*
-//         ⬜  ⬜  ⬜ 1️  ⬛
-//         ⬜  ⬜  ⬜ 2️  ⬛
-//         ⬜  ⬜  ⬜ 1️  ⬛
-//         ⬜  1️ 1️  2️  ⬛
-//         ⬜  1️ ⬛  ⬛  ⬛
-//          */
-//
-//         let mut field = Field::new(5, 5).unwrap();
-//         field.0[0][4].mine();
-//         field.0[2][4].mine();
-//         field.0[4][2].mine();
-//         field.0[0][3].increment_adjacent_mines_amount(); // 1
-//         field.0[1][3].increment_adjacent_mines_amount(); // 1...
-//         field.0[1][3].increment_adjacent_mines_amount(); // 2
-//         field.0[2][3].increment_adjacent_mines_amount(); // 1
-//         field.0[3][1].increment_adjacent_mines_amount(); // 1
-//         field.0[3][2].increment_adjacent_mines_amount(); // 1
-//         field.0[3][3].increment_adjacent_mines_amount(); // 1...
-//         field.0[3][3].increment_adjacent_mines_amount(); // 2
-//         field.0[4][1].increment_adjacent_mines_amount(); // 1
-//
-//         field.open_cell((1, 1));
-//
-//         let cells_that_should_be_opened_positions = [
-//             (0u8, 0u8),
-//             (0, 1),
-//             (0, 2),
-//             (0, 3),
-//             (1, 0),
-//             (1, 1),
-//             (1, 2),
-//             (1, 3),
-//             (2, 0),
-//             (2, 1),
-//             (2, 2),
-//             (2, 3),
-//             (3, 0),
-//             (3, 1),
-//             (3, 2),
-//             (3, 3),
-//             (4, 0),
-//             (4, 1),
-//         ];
-//
-//         field =
-//             helper_assert_for_cells(field, cells_that_should_be_opened_positions.to_vec(), true);
-//
-//         let cells_that_should_be_closed_positions =
-//             [(0, 4), (1, 4), (2, 4), (3, 4), (4, 2), (4, 3), (4, 4)];
-//
-//         assert_eq!(
-//             cells_that_should_be_opened_positions.len()
-//                 + cells_that_should_be_closed_positions.len(),
-//             field.get_size().2 as usize
-//         );
-//
-//         helper_assert_for_cells(field, cells_that_should_be_closed_positions.to_vec(), false);
-//     }
-//
-//     #[test]
-//     fn open_cell_correctly_opens_cell_when_the_target_cell_contains_a_number() {
-//         // Such a field, when opening the (1, 1) cell
-//         /*
-//         ⬜  1️  💣  2️  💣
-//         ⬜  1️  1️  2️  1️
-//         ⬜  ⬜  ⬜  ⬜  ⬜
-//         1️  1️  1️  ⬜  ⬜
-//         1️  💣  1️  ⬜  ⬜
-//          */
-//
-//         // must produce the following result
-//         /*
-//         ⬛  ⬛  ⬛  ⬛  ⬛
-//         ⬛  1️  ⬛  ⬛  ⬛
-//         ⬛  ⬛  ⬛  ⬛  ⬛
-//         ⬛  ⬛  ⬛  ⬛  ⬛
-//         ⬛  ⬛  ⬛  ⬛  ⬛
-//          */
-//
-//         let mut field = Field::new(5, 5).unwrap();
-//         field.0[0][2].mine();
-//         field.0[0][4].mine();
-//         field.0[4][1].mine();
-//         // we only care about the scenario when the target cell is a number
-//         field.0[1][1].increment_adjacent_mines_amount(); // 1
-//
-//         field.open_cell((1, 1));
-//
-//         let cells_that_should_be_opened_positions = [(1, 1)];
-//
-//         field =
-//             helper_assert_for_cells(field, cells_that_should_be_opened_positions.to_vec(), true);
-//
-//         let cells_that_should_be_closed_positions = [
-//             (0, 0),
-//             (0, 1),
-//             (0, 2),
-//             (0, 3),
-//             (0, 4),
-//             (1, 0),
-//             (1, 2),
-//             (1, 3),
-//             (1, 4),
-//             (2, 0),
-//             (2, 1),
-//             (2, 2),
-//             (2, 3),
-//             (2, 4),
-//             (3, 0),
-//             (3, 1),
-//             (3, 2),
-//             (3, 3),
-//             (3, 4),
-//             (4, 0),
-//             (4, 1),
-//             (4, 2),
-//             (4, 3),
-//             (4, 4),
-//         ];
-//
-//         assert_eq!(
-//             cells_that_should_be_opened_positions.len()
-//                 + cells_that_should_be_closed_positions.len(),
-//             field.get_size().2 as usize
-//         );
-//
-//         helper_assert_for_cells(field, cells_that_should_be_closed_positions.to_vec(), false);
-//     }
-//
-//     #[test]
-//     fn open_surrounding_cells_correctly_opens_surrounding_cells() {
-//         // let assume we have a 5*5 field where at the (0, 0) position is the only mine. Currently we're as the
-//         // state after the the first move, where the user has just opened the cell (1, 0). Next, they flag the (0, 0)
-//         // cell and open the surrounding cells for (1, 0). This should effectively open all the cells.
-//
-//         // create the filed with one mine a properly distributed numbers
-//         let mut field = Field::new(5, 5).unwrap();
-//         field.0[0][0].mine();
-//         field.insert_numbers(vec![field.0[0][0]]);
-//
-//         // open the (1, 0) cell
-//         field.open_cell((1, 0));
-//
-//         // flag the mine
-//         field.flag_cell((0, 0));
-//
-//         // open the surrounding cells for the opened (1, 0)
-//         field.open_surrounding_cells((1, 0));
-//
-//         // all the cells except for the one with the mine should be opened now
-//         let all_cells_opened = field.0.iter().flatten().skip(1).all(|cell| cell.is_open());
-//
-//         assert!(all_cells_opened);
-//     }
-//
-//     #[test]
-//     fn open_surrounding_cells_does_not_produce_no_effect_when_the_target_cell_is_closed() {
-//         // the same field from the above, but this time we won't open the (1, 0) cells and will then try to open its
-//         // surrounding cells. This should fail (by not producing any effect)
-//
-//         // create the filed with one mine a properly distributed numbers
-//         let mut field = Field::new(5, 5).unwrap();
-//         field.0[0][0].mine();
-//         field.insert_numbers(vec![field.0[0][0]]);
-//
-//         // don't open the (1, 0) cell
-//         // field.open_cell((1, 0));
-//
-//         // flag the mine
-//         field.flag_cell((0, 0));
-//
-//         // open the surrounding cells for the close (1, 0)
-//         field.open_surrounding_cells((1, 0));
-//
-//         // all the cells should remain closed (the first one - the one with the mine - should remain `Flagged`)
-//         let all_cells_closed = field.0.iter().flatten().skip(1).all(|cell| !cell.is_open());
-//
-//         assert!(all_cells_closed);
-//     }
-//
-//     #[test]
-//     fn open_surrounding_cells_does_not_produce_no_effect_when_the_target_cell_is_flagged() {
-//         // the same field from the above, but this time we flag the mined (0, 0) cell and trying to open the surrounding
-//         // cells for it. This attempt should fail by not producing any effect
-//
-//         // create the filed with one mine a properly distributed numbers
-//         let mut field = Field::new(5, 5).unwrap();
-//         field.0[0][0].mine();
-//         field.insert_numbers(vec![field.0[0][0]]);
-//
-//         // don't open the (1, 0) cell
-//         // field.open_cell((1, 0));
-//
-//         // flag the mine
-//         field.flag_cell((0, 0));
-//
-//         // open the surrounding cells for it
-//         field.open_surrounding_cells((0, 0));
-//
-//         // all the cells should remain closed (the first one - the one with the mine - should remain `Flagged`)
-//         let all_cells_closed = field.0.iter().flatten().skip(1).all(|cell| !cell.is_open());
-//
-//         assert!(all_cells_closed);
-//     }
-//
-//     #[test]
-//     fn open_surrounding_cells_does_not_produce_no_effect_when_the_flags_number_mismatch_the_mines_around_amount(
-//     ) {
-//         fn calc_num_of_closed_cells(field: &Field) -> usize {
-//             field
-//                 .0
-//                 .iter()
-//                 .flatten()
-//                 .filter(|cell| !cell.is_open() && !cell.is_flagged())
-//                 .collect::<Vec<&Cell>>()
-//                 .len()
-//         }
-//
-//         // the same field, but this time opening the surrounding cells should fail (not produce eny effect) because
-//         // 1. For the first part of the test there won't be any flags at all
-//         // 2. For the second part of the test there will be two flags instead of one
-//
-//         // create the filed with one mine a properly distributed numbers
-//         let mut field = Field::new(5, 5).unwrap();
-//         field.0[0][0].mine();
-//         field.insert_numbers(vec![field.0[0][0]]);
-//
-//         // open the (1, 0) cell
-//         field.open_cell((1, 0));
-//
-//         // don't flag the mine
-//         // field.flag_cell((0, 0));
-//
-//         // open the surrounding cells for the opened (1, 0)
-//         field.open_surrounding_cells((1, 0));
-//
-//         // all the cells except for the one with that was opened should be closed
-//         let number_of_closed_cells = calc_num_of_closed_cells(&field);
-//
-//         assert_eq!(number_of_closed_cells, 24);
-//
-//         // SECOND PART //
-//
-//         // flag two cells
-//         field.flag_cell((0, 0));
-//         field.flag_cell((0, 1));
-//
-//         // open the surrounding cells for the opened (1, 0)
-//         field.open_surrounding_cells((1, 0));
-//
-//         // all the cells except for the one with that was opened should be closed
-//         let number_of_closed_cells = calc_num_of_closed_cells(&field);
-//
-//         // should be 22 because one cell has been opened and 2 were flagged: 25 - 1 - 2 is 22
-//         assert_eq!(number_of_closed_cells, 22);
-//     }
-//
-//     #[test]
-//     fn flag_cell_correctly_toggles_the_flag() {
-//         let mut field = Field::new(20, 20).unwrap();
-//
-//         field.flag_cell((0, 0));
-//         assert!(field.0[0][0].is_flagged());
-//
-//         field.flag_cell((0, 0));
-//         assert!(!field.0[0][0].is_open() && !field.0[0][0].is_flagged());
-//     }
-//
-//     #[test]
-//     fn check_open_mines_exist_correctly_indicates_the_presence_of_mines() {
-//         let mut field = Field::new(20, 20).unwrap();
-//         let mut mine = Cell::new((0, 0));
-//         mine.mine();
-//         field.0[0][0] = mine;
-//         field.open_cell((0, 0));
-//
-//         assert!(field.check_open_mines_exist());
-//     }
-//
-//     #[test]
-//     fn check_open_mines_exist_does_not_false_trigger() {
-//         let mut field = Field::new(20, 20).unwrap();
-//         let mut mine = Cell::new((0, 0));
-//         mine.mine();
-//         field.0[0][0] = mine;
-//         // field.open_cell((0, 0)); // don't open the mined cell
-//
-//         assert!(!field.check_open_mines_exist());
-//     }
-//
-//     #[test]
-//     fn check_all_non_mines_open_is_true_when_all_non_mines_are_open() {
-//         let mut field = Field::new(20, 20).unwrap();
-//         let mut mine = Cell::new((0, 0));
-//         mine.mine();
-//         field.0[0][0] = mine;
-//         field.open_cell((19, 19)); // this opens all the non-mined cells consecutively
-//
-//         assert!(field.check_all_non_mines_open());
-//     }
-//
-//     #[test]
-//     fn check_all_non_mines_open_does_not_false_trigger() {
-//         let mut field = Field::new(20, 20).unwrap();
-//         let mut mine = Cell::new((0, 0));
-//         mine.mine();
-//         field.0[0][0] = mine;
-//         // field.open_cell((19, 19)); // don't open the empty cell, so everything remains closed
-//
-//         assert!(!field.check_all_non_mines_open());
-//     }
-// }
