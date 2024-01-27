@@ -142,21 +142,30 @@ impl Field {
             .collect::<Vec<Cell>>();
 
         // Increment the number of mines around a cell for all the cells which are adjacent to those with mines.
-        cells_with_mines
+        let adjacent_cells_positions = cells_with_mines
             .iter()
+            .map(|cell| self.get_position(cell))
             // Get a mined cell's adjacent cells' positions.
-            .flat_map(|cell| cell.get_adjacent_cells_positions())
+            .flat_map(|position| self.get_adjacent_cells_positions(position))
+            .collect::<Vec<(u8, u8)>>();
+
+        adjacent_cells_positions
+            .iter()
             .for_each(|(row_index, column_index)| {
                 if let Some(cell) = self
                     .grid
-                    .get_mut(row_index as usize)
-                    .and_then(|row| row.get_mut(column_index as usize))
+                    .get_mut(*row_index as usize)
+                    .and_then(|row| row.get_mut(*column_index as usize))
                 {
                     cell.increment_mines_around_amount();
                 }
             });
 
         Ok(())
+    }
+
+    pub fn get_position(&self, cell: &Cell) -> (u8, u8) {
+        cell.position
     }
 
     /// Returns a cell by its position or `None` if there's no cell at the given position.
@@ -196,13 +205,53 @@ impl Field {
             }
 
             if let Some(0) = cell.get_mines_around_amount() {
-                let adjacent_cells_to_open = cell.get_adjacent_cells_positions();
+                let adjacent_cells_to_open =
+                    self.get_adjacent_cells_positions((row_index, column_index));
 
                 adjacent_cells_to_open
                     .iter()
                     .for_each(|cell_position| self.open_cell(*cell_position));
             }
         }
+    }
+
+    /// Returns the positions of the cell's adjacent cells.
+    ///
+    /// The method implies an infinite field, so the returned values must be double-checked by the caller with respect
+    /// for the field's dimensions (so that there are no out-of-bounds cells' positions).
+    pub fn get_adjacent_cells_positions(&self, cell_position: (u8, u8)) -> Vec<(u8, u8)> {
+        // Transform the cell's coordinates into `i16` to be able to subtract and add without overflow.
+        let (row_index, column_index) = (cell_position.0 as i16, cell_position.1 as i16);
+
+        // Create a 2D vector of all the cells' indices surrounding the current one.
+        vec![
+            vec![
+                (row_index - 1, column_index - 1),
+                (row_index, column_index - 1),
+                (row_index + 1, column_index - 1),
+            ],
+            vec![
+                (row_index - 1, column_index),
+                /*         current         */
+                (row_index + 1, column_index),
+            ],
+            vec![
+                (row_index - 1, column_index + 1),
+                (row_index, column_index + 1),
+                (row_index + 1, column_index + 1),
+            ],
+        ]
+        .into_iter()
+        // Flatten the 2D vector for an easier filtration.
+        .flatten()
+        .filter(|(row_index, column_index)| {
+            // Filter out all the cells' indices that go beyond the field's dimensions. Namely, where the row's and
+            // column's indices are less than 0 (the case of the first  row/column).
+            *row_index >= 0 && *column_index >= 0
+        })
+        // Convert the coordinates back into `u8`.
+        .map(|(row_index, column_index)| (row_index as u8, column_index as u8))
+        .collect::<Vec<(u8, u8)>>()
     }
 
     ///

@@ -32,7 +32,7 @@ enum CellState {
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Cell {
     /// The cell's position in the field is represented with its row's and column's indices (respectively).
-    position: (u8, u8),
+    pub position: (u8, u8),
     /// The cell's variant is either of the `CellVariant` enum.
     variant: CellVariant,
     /// The cell's state is either of the `CellState` enum.
@@ -112,45 +112,6 @@ impl Cell {
         };
 
         *self
-    }
-
-    /// Returns the positions of the cell's adjacent cells.
-    ///
-    /// The method implies an infinite field, so the returned values must be double-checked by the caller with respect
-    /// for the field's dimensions (so that there are no out-of-bounds cells' positions).
-    pub fn get_adjacent_cells_positions(&self) -> Vec<(u8, u8)> {
-        // Transform the cell's coordinates into `i16` to be able to subtract and add without overflow.
-        let (row_index, column_index) = (self.position.0 as i16, self.position.1 as i16);
-
-        // Create a 2D vector of all the cells' indices surrounding the current one.
-        vec![
-            vec![
-                (row_index - 1, column_index - 1),
-                (row_index, column_index - 1),
-                (row_index + 1, column_index - 1),
-            ],
-            vec![
-                (row_index - 1, column_index),
-                /*         current         */
-                (row_index + 1, column_index),
-            ],
-            vec![
-                (row_index - 1, column_index + 1),
-                (row_index, column_index + 1),
-                (row_index + 1, column_index + 1),
-            ],
-        ]
-        .into_iter()
-        // Flatten the 2D vector for an easier filtration.
-        .flatten()
-        .filter(|(row_index, column_index)| {
-            // Filter out all the cells' indices that go beyond the field's dimensions. Namely, where the row's and
-            // column's indices are less than 0 (the case of the first  row/column).
-            *row_index >= 0 && *column_index >= 0
-        })
-        // Convert the coordinates back into `u8`.
-        .map(|(row_index, column_index)| (row_index as u8, column_index as u8))
-        .collect::<Vec<(u8, u8)>>()
     }
 }
 
