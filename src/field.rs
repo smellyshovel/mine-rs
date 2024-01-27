@@ -166,6 +166,13 @@ impl Field {
             .and_then(|r| r.get(column_index as usize))
     }
 
+    /// Returns a cell by its position or `None` if there's no cell at the given position.
+    pub fn get_cell_mut(&mut self, (row_index, column_index): (u8, u8)) -> Option<&mut Cell> {
+        self.grid
+            .get_mut(row_index as usize)
+            .and_then(|r| r.get_mut(column_index as usize))
+    }
+
     /// Opens the cell by its position.
     ///
     /// As a side effect, it also recursively opens all the adjacent cells to the given one if its numerical value is 0
@@ -181,60 +188,52 @@ impl Field {
     //     /// The positions in the returned vector are guaranteed to only include the positions of the cells which do exist
     //     /// in the field.
     pub fn open_cell(&mut self, (row_index, column_index): (u8, u8)) {
-        if let Some(cell) = self
-            .grid
-            .get_mut(row_index as usize)
-            .and_then(|row| row.get_mut(column_index as usize))
-        {
-            // Only open the cell if it's closed and is not flagged.
+        if let Some(cell) = self.get_cell_mut((row_index, column_index)) {
             if !cell.is_open() && !cell.is_flagged() {
                 cell.open();
+            } else {
                 return;
             }
 
-            // We only go here if the cell was opened above.
             if let Some(0) = cell.get_mines_around_amount() {
-                // Return the indices of the cell's adjacent cells to recursively open them as well in the caller.
-                let next_cells_to_open_positions = cell.get_adjacent_cells_positions();
+                let adjacent_cells_to_open = cell.get_adjacent_cells_positions();
 
-                next_cells_to_open_positions
+                adjacent_cells_to_open
                     .iter()
-                    .for_each(|cell_to_open_position| {
-                        self.open_cell(*cell_to_open_position);
-                    });
+                    .for_each(|cell_position| self.open_cell(*cell_position));
             }
-        };
+        }
     }
 
     ///
     pub fn open_surrounding_cells(&mut self, (row_index, column_index): (u8, u8)) {
-        // get the width and the height of the field
-
-        if let Some(target_cell) = self.get_cell((row_index, column_index)) {
-            let adjacent_cells_indices = target_cell.get_adjacent_cells_positions();
-
-            let flagged_adjacent_cells_amount = adjacent_cells_indices
-                .iter()
-                .filter_map(|(row_index, column_index)| {
-                    self.grid
-                        .get(*row_index as usize)
-                        .and_then(|row| row.get(*column_index as usize))
-                })
-                .filter(|adjacent_cell| adjacent_cell.is_flagged())
-                .collect::<Vec<&Cell>>()
-                .len() as u8;
-
-            if target_cell.is_open()
-                && target_cell.get_mines_around_amount().is_some()
-                && flagged_adjacent_cells_amount == target_cell.get_mines_around_amount().unwrap()
-            {
-                adjacent_cells_indices
-                    .into_iter()
-                    .for_each(|adjacent_cell_position| {
-                        self.open_cell(adjacent_cell_position);
-                    });
-            };
-        }
+        // // get the width and the height of the field
+        //
+        // if let Some(target_cell) = self.get_cell((row_index, column_index)) {
+        //     let adjacent_cells_indices = target_cell.get_adjacent_cells_positions();
+        //
+        //     let flagged_adjacent_cells_amount = adjacent_cells_indices
+        //         .iter()
+        //         .filter_map(|(row_index, column_index)| {
+        //             self.grid
+        //                 .get(*row_index as usize)
+        //                 .and_then(|row| row.get(*column_index as usize))
+        //         })
+        //         .filter(|adjacent_cell| adjacent_cell.is_flagged())
+        //         .collect::<Vec<&Cell>>()
+        //         .len() as u8;
+        //
+        //     if target_cell.is_open()
+        //         && target_cell.get_mines_around_amount().is_some()
+        //         && flagged_adjacent_cells_amount == target_cell.get_mines_around_amount().unwrap()
+        //     {
+        //         adjacent_cells_indices
+        //             .into_iter()
+        //             .for_each(|adjacent_cell_position| {
+        //                 self.open_cell(adjacent_cell_position);
+        //             });
+        //     };
+        // }
     }
 
     pub fn flag_cell(&mut self, (row_index, columns_index): (u8, u8)) {
