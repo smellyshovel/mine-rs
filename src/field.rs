@@ -1,12 +1,12 @@
 mod cell;
-use cell::Cell;
 
+use cell::Cell;
 use rand::{prelude::SliceRandom, thread_rng};
 use std::fmt::{Debug, Display, Formatter};
 
 /// The enum represents all the variants of what can possibly go wrong when working with fields.
 #[derive(Debug, PartialEq)]
-pub enum FieldError {
+enum FieldError {
     /// Used when the user tries to create a field with less than two cells total.
     NotEnoughCells,
     /// Used when the required number of mines is less than 1 or is more than the total number of cells minus 1 (there
@@ -15,7 +15,7 @@ pub enum FieldError {
     /// The value represents the maximum allowed number of mines for the field with the given dimensions.
     InvalidMinesAmount(u16),
     /// Used when the user tries to populate the field with mines and tells it to except some cell, but that cell's
-    /// position is incorrect (i.e., the row's and/or the column's indices are out of the field's dimensions).
+    /// position is incorrect (i.e., the row's and/or the column's indices are beyond the field's bounds).
     ///
     /// The value represents the requested-to-except cell's row and column indices respectively.
     InvalidExceptedCellPosition((u8, u8)),
@@ -28,22 +28,22 @@ pub enum FieldError {
 /// The field representation.
 ///
 /// The field is basically a grid (a 2D vector) of cells with a known number of mines.
-#[derive(Default, PartialEq, Eq)]
-pub struct Field {
+#[derive(PartialEq, Eq)]
+struct Field {
     /// The grid of cells of the field. A 2D vector, where the top level represents rows, and the nested vector of each
-    /// row represents a cell.
+    /// row represents cells.
     grid: Vec<Vec<Cell>>,
     /// The total number of mined cells.
     mines_amount: u16,
 }
 
 impl Field {
-    /// Creates a new field with the provided dimensions and number of mines.
+    /// Creates a new [`Field`] with the provided dimensions and number of mines.
     ///
     /// Even though the method accepts the desired mines amount, it doesn't populate the field with them. The reason for
     /// that is that most of the time we don't want the player to click on a mined cell as their first move (i.e., we
     /// want a certain cell to be excepted from holding a mine), and the position of the cell to except would only be
-    /// known after the field has been created and the user has opened their first cell.
+    /// known after the field has been created and the user has requested to open their first cell.
     ///
     /// On the other hand, the configuration of the field, and, namely, the number of mines required, happens at the
     /// same time as when configuring the field's dimensions. Therefore, it's better to know if the number of mines
@@ -51,10 +51,10 @@ impl Field {
     /// so that an error (if any) could be shown to the player at the configuration stage, rather than after they
     /// actually start playing.
     ///
-    /// The method might fail with `FieldError::NotEnoughCells` in case the total requested field's size is less than
-    /// two cells or with `FieldError::InvalidMinesAmount` in case the requested mines amount is less than 1 or is more
-    /// than the total number of cells minus 1.
-    pub fn new(rows_amount: u8, columns_amount: u8, mines_amount: u16) -> Result<Self, FieldError> {
+    /// The method might fail with [`FieldError::NotEnoughCells`] in case the total requested field's size is less than
+    /// two cells or with [`FieldError::InvalidMinesAmount`] in case the requested mines amount is less than one or is
+    /// more than the total number of cells minus 1.
+    fn new(rows_amount: u8, columns_amount: u8, mines_amount: u16) -> Result<Self, FieldError> {
         let cells_amount = rows_amount as u16 * columns_amount as u16;
 
         if cells_amount < 2 {
@@ -88,7 +88,7 @@ impl Field {
     ///
     /// As a side effect, it also increments the numerical values of the mined cells' adjacent cells, which represent
     /// the number of mines around an adjacent cell.
-    pub fn populate_with_mines(
+    fn populate_with_mines(
         &mut self,
         excepted_cell_position: Option<(u8, u8)>, // `(row_index, column_index)`
     ) -> Result<(), FieldError> {
@@ -109,7 +109,7 @@ impl Field {
         let mut flattened_field = self.grid.iter_mut().flatten().collect::<Vec<&mut Cell>>();
 
         // Return an error if there are mines already: can't populate with mines a field that's already been populated.
-        if flattened_field.iter().any(|cell| cell.is_mined()) {
+        if flattened_field.into_iter().any(|cell| cell.is_mined()) {
             return Err(FieldError::MinesAlreadyExist);
         }
 
@@ -134,7 +134,7 @@ impl Field {
             })
             .collect::<Vec<&mut Cell>>();
 
-        // Get a flat vector of all the mined cells' adjacent cells.
+        // Get a flat vector of all the mined cells' adjacent cells' positions.
         let adjacent_cells_positions = cells_with_mines
             .into_iter()
             // Get a mined cell's adjacent cells' positions.
@@ -156,7 +156,7 @@ impl Field {
 
     /// Returns the field's height (the number of rows), width (the number of columns) and the two values multiplied,
     /// which is effectively the total number of cells.
-    pub fn get_size(&self) -> (u8, u8, u16) {
+    fn get_size(&self) -> (u8, u8, u16) {
         let rows_amount = self.grid.len() as u8;
         let columns_amount = self.grid.first().map(|row| row.len()).unwrap_or(0) as u8;
         let cells_amount = rows_amount as u16 * columns_amount as u16;
@@ -165,14 +165,14 @@ impl Field {
     }
 
     /// Returns a read-only cell reference by its position or `None` if there's no cell at the given position.
-    pub fn get_cell(&self, (row_index, column_index): (u8, u8)) -> Option<&Cell> {
+    fn get_cell(&self, (row_index, column_index): (u8, u8)) -> Option<&Cell> {
         self.grid
             .get(row_index as usize)
             .and_then(|r| r.get(column_index as usize))
     }
 
     /// Returns a mutable cell reference by its position or `None` if there's no cell at the given position.
-    pub fn get_cell_mut(&mut self, (row_index, column_index): (u8, u8)) -> Option<&mut Cell> {
+    fn get_cell_mut(&mut self, (row_index, column_index): (u8, u8)) -> Option<&mut Cell> {
         self.grid
             .get_mut(row_index as usize)
             .and_then(|r| r.get_mut(column_index as usize))
@@ -182,7 +182,7 @@ impl Field {
     ///
     /// As a side effect, it also recursively opens all the adjacent cells to the given one if its numerical value is 0
     /// (if the target cell has no mines in it, to put it simpler).
-    pub fn open_cell(&mut self, (row_index, column_index): (u8, u8)) {
+    fn open_cell(&mut self, (row_index, column_index): (u8, u8)) {
         if let Some(cell) = self.get_cell_mut((row_index, column_index)) {
             if !cell.is_open() && !cell.is_flagged() {
                 cell.open();
@@ -205,7 +205,7 @@ impl Field {
     ///
     /// Won't produce any effect if the target cell is closed or flagged or if its numerical value is not the same
     /// as the number of flags placed around it.
-    pub fn open_surrounding_cells(&mut self, (row_index, column_index): (u8, u8)) {
+    fn open_surrounding_cells(&mut self, (row_index, column_index): (u8, u8)) {
         // get the width and the height of the field
 
         if let Some(target_cell) = self.get_cell((row_index, column_index)) {
@@ -232,7 +232,7 @@ impl Field {
     }
 
     /// Toggles flag for the cell (if any) with the given position.
-    pub fn toggle_flag_for_cell(&mut self, (row_index, columns_index): (u8, u8)) {
+    fn toggle_flag_for_cell(&mut self, (row_index, columns_index): (u8, u8)) {
         if let Some(cell) = self.get_cell_mut((row_index, columns_index)) {
             cell.toggle_flag();
         }
@@ -241,7 +241,7 @@ impl Field {
     /// The method returns the total number of all the currently flagged cells in the field.
     ///
     /// A use case might be displaying the in-game statistics.
-    pub fn get_flagged_cells_amount(&self) -> u16 {
+    fn get_flagged_cells_amount(&self) -> u16 {
         self.grid
             .iter()
             .flatten()
@@ -253,7 +253,7 @@ impl Field {
     /// Checks that there exists at least one mined cell which is open.
     ///
     /// This is effectively the loss-condition for the game.
-    pub fn check_open_mines_exist(&self) -> bool {
+    fn check_open_mines_exist(&self) -> bool {
         self.grid
             .iter()
             .flatten()
@@ -263,7 +263,7 @@ impl Field {
     /// Checks that all the empty cells are open.
     ///
     /// This is effectively the win-condition for the game.
-    pub fn check_all_non_mines_open(&self) -> bool {
+    fn check_all_non_mines_open(&self) -> bool {
         self.grid
             .iter()
             .flatten()
@@ -274,7 +274,7 @@ impl Field {
     /// Opens all the yet-not-flagged cells with mines.
     ///
     /// The method should be called when the game is already lost to reveal the real positions of mines.
-    pub fn open_missed_mines(&mut self) {
+    fn open_missed_mines(&mut self) {
         self.grid
             .iter_mut()
             .flatten()
@@ -327,5 +327,13 @@ impl Display for Field {
         }
 
         write!(f, "")
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn a() {
+        unimplemented!()
     }
 }
