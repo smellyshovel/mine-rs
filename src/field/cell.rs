@@ -32,7 +32,7 @@ enum CellState {
 #[derive(PartialEq, Eq)]
 pub struct Cell {
     /// The cell's position in the field is represented with its row's and column's indices (respectively).
-    pub position: (u8, u8),
+    position: (u8, u8),
     /// The cell's variant is either of the `CellVariant` enum.
     variant: CellVariant,
     /// The cell's state is either of the `CellState` enum.
@@ -186,5 +186,142 @@ impl Display for Cell {
             // The rest of the cases is successfully covered with the `Debug` trait's implementation.
             _ => write!(f, "{:?}", self),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::{Cell, CellState, CellVariant};
+
+    #[test]
+    fn create_a_cell_instance() {
+        let cell = Cell::new((10, 10));
+
+        assert_eq!(
+            cell,
+            Cell {
+                position: (10, 10),
+                variant: CellVariant::Empty(0),
+                state: CellState::Closed(false)
+            }
+        );
+    }
+
+    #[test]
+    fn mine_cell_and_is_mine() {
+        let mut cell = Cell::new((10, 10));
+        assert!(!cell.is_mined());
+
+        cell.mine();
+        assert!(cell.is_mined());
+    }
+
+    #[test]
+    fn increment_mines_around_amount_and_get_mines_around_amount_for_an_empty_cell() {
+        let mut cell = Cell::new((10, 10));
+        assert_eq!(cell.get_mines_around_amount().unwrap(), 0);
+
+        cell.increment_mines_around_amount();
+        cell.increment_mines_around_amount();
+        cell.increment_mines_around_amount();
+
+        assert_eq!(cell.get_mines_around_amount().unwrap(), 3);
+    }
+
+    #[test]
+    fn increment_mines_around_amount_and_get_mines_around_amount_for_a_mined_cell() {
+        let mut cell = Cell::new((10, 10));
+        cell.mine();
+        assert_eq!(cell.get_mines_around_amount(), None);
+
+        cell.increment_mines_around_amount();
+        cell.increment_mines_around_amount();
+        cell.increment_mines_around_amount();
+
+        assert_eq!(cell.get_mines_around_amount(), None);
+    }
+
+    #[test]
+    fn open_and_is_open() {
+        let mut cell = Cell::new((10, 10));
+        assert!(!cell.is_open());
+
+        cell.open();
+        assert!(cell.is_open());
+    }
+
+    #[test]
+    fn toggle_flag_and_is_flagged_for_an_empty_cell() {
+        let mut cell = Cell::new((10, 10));
+        assert!(!cell.is_flagged());
+
+        cell.toggle_flag();
+        assert!(cell.is_flagged());
+
+        cell.toggle_flag();
+        assert!(!cell.is_flagged());
+    }
+
+    #[test]
+    fn toggle_flag_and_is_flagged_for_an_open_cell() {
+        let mut cell = Cell::new((10, 10));
+        cell.open();
+        assert!(!cell.is_flagged());
+
+        cell.toggle_flag();
+        assert!(!cell.is_flagged());
+
+        cell.toggle_flag();
+        assert!(!cell.is_flagged());
+    }
+
+    #[test]
+    fn get_adjacent_cells_positions_for_middle_cell() {
+        let cell = Cell::new((10, 10));
+        let adjacent_cells_positions = cell.get_adjacent_cells_positions();
+
+        assert_eq!(
+            adjacent_cells_positions,
+            [
+                (9, 9),
+                (10, 9),
+                (11, 9),
+                (9, 10),
+                (11, 10),
+                (9, 11),
+                (10, 11),
+                (11, 11)
+            ]
+        );
+    }
+
+    #[test]
+    fn get_adjacent_cells_positions_for_0th_row() {
+        let cell = Cell::new((0, 10));
+        let adjacent_cells_positions = cell.get_adjacent_cells_positions();
+
+        assert_eq!(
+            adjacent_cells_positions,
+            [(0, 9), (1, 9), (1, 10), (0, 11), (1, 11)]
+        );
+    }
+
+    #[test]
+    fn get_adjacent_cells_positions_for_0th_column() {
+        let cell = Cell::new((10, 0));
+        let adjacent_cells_positions = cell.get_adjacent_cells_positions();
+
+        assert_eq!(
+            adjacent_cells_positions,
+            [(9, 0), (11, 0), (9, 1), (10, 1), (11, 1)]
+        );
+    }
+
+    #[test]
+    fn get_adjacent_cells_positions_for_0_0_edge_case() {
+        let cell = Cell::new((0, 0));
+        let adjacent_cells_positions = cell.get_adjacent_cells_positions();
+
+        assert_eq!(adjacent_cells_positions, [(1, 0), (0, 1), (1, 1)]);
     }
 }
