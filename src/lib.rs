@@ -122,7 +122,7 @@ impl Minesweeper {
                 }
             }
             MinesweeperAction::FlagCell(cell_position) => {
-                self.field.flag_cell(cell_position);
+                self.field.toggle_flag_for_cell(cell_position);
             }
         };
 
