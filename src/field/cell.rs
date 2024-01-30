@@ -33,14 +33,14 @@ enum CellState {
 pub struct Cell {
     /// The cell's position in the field is represented with its row's and column's indices (respectively).
     position: (u8, u8),
-    /// The cell's variant is either of the `CellVariant` enum.
+    /// The cell's variant is either of the [`CellVariant`] enum.
     variant: CellVariant,
-    /// The cell's state is either of the `CellState` enum.
+    /// The cell's state is either of the [`CellState`] enum.
     state: CellState,
 }
 
 impl Cell {
-    /// Creates a new closed not flagged empty `Cell` instance with the position provided.
+    /// Creates a new closed not flagged empty [`Cell`] instance with the position provided.
     pub fn new(position: (u8, u8)) -> Self {
         Cell {
             position,
@@ -59,7 +59,7 @@ impl Cell {
         self.variant = CellVariant::Mine;
     }
 
-    /// Returns the amount of mines around the cell or `None` if the cell itself is mined.
+    /// Returns the amount of mines around the cell or [`None`] if the cell itself is mined.
     pub fn get_mines_around_amount(&self) -> Option<u8> {
         if let CellVariant::Empty(adjacent_mines_amount) = self.variant {
             Some(adjacent_mines_amount)
