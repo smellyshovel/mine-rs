@@ -242,6 +242,8 @@ impl Field {
         }
     }
 
+    // TODO below needs tests
+
     /// Toggles flag for the cell (if any) with the given position.
     pub fn toggle_cell_flag(&mut self, (row_index, columns_index): (u8, u8)) {
         if let Some(cell) = self.get_cell_mut((row_index, columns_index)) {
@@ -343,6 +345,7 @@ impl Display for Field {
 #[cfg(test)]
 mod test {
     use super::{Cell, Field, FieldError};
+    use std::cell::RefCell;
 
     #[test]
     fn create_field_instance_correct_params() {
@@ -426,39 +429,48 @@ mod test {
         assert!(result.is_err_and(|err| err == FieldError::MinesAlreadyExist));
     }
 
-    fn create_stub_mined_field() -> Field {
+    fn create_stub_mined_field(enlarged: bool) -> Field {
         // mine mine none
         // none none mine
         // none none none
-        Field {
-            grid: vec![
-                vec![
-                    {
-                        let mut cell = Cell::new((0, 0));
-                        cell.mine();
-                        cell
-                    },
-                    {
-                        let mut cell = Cell::new((0, 1));
-                        cell.mine();
-                        cell
-                    },
-                    Cell::new((0, 2)),
-                ],
-                vec![Cell::new((1, 0)), Cell::new((1, 1)), {
-                    let mut cell = Cell::new((1, 2));
+        // none none none <- only when enlarged
+        let mut grid = vec![
+            vec![
+                {
+                    let mut cell = Cell::new((0, 0));
                     cell.mine();
                     cell
-                }],
-                vec![Cell::new((2, 0)), Cell::new((2, 1)), Cell::new((2, 2))],
+                },
+                {
+                    let mut cell = Cell::new((0, 1));
+                    cell.mine();
+                    cell
+                },
+                Cell::new((0, 2)),
             ],
+            vec![Cell::new((1, 0)), Cell::new((1, 1)), {
+                let mut cell = Cell::new((1, 2));
+                cell.mine();
+                cell
+            }],
+            vec![Cell::new((2, 0)), Cell::new((2, 1)), Cell::new((2, 2))],
+        ];
+
+        if enlarged {
+            // Add a row of empty cells.
+            let empty_row = vec![Cell::new((3, 0)), Cell::new((3, 1)), Cell::new((3, 2))];
+            grid.push(empty_row);
+        }
+
+        Field {
+            grid,
             mines_amount: 3,
         }
     }
 
     #[test]
     fn mines_around_values_get_updated_correctly() {
-        let mut field = create_stub_mined_field();
+        let mut field = create_stub_mined_field(false);
         field.update_mines_around_values();
 
         let result = field
@@ -482,5 +494,172 @@ mod test {
                 Some(1)
             ]
         );
+    }
+
+    #[test]
+    fn get_size_correctly_calculates_dimensions() {
+        let field = Field::new(3, 3, 3).unwrap();
+        let size = field.get_size();
+
+        assert_eq!(size, (3, 3, 9));
+    }
+
+    #[test]
+    fn get_cell_correctly_finds_the_cell_by_its_position() {
+        let field = Field::new(3, 3, 3).unwrap();
+        let cell = field.get_cell((0, 0));
+
+        assert!(cell.is_some());
+        assert_eq!(cell.unwrap(), &field.grid[0][0])
+    }
+
+    #[test]
+    fn get_cell_returns_none_for_nonexisting_cells() {
+        let field = Field::new(3, 3, 3).unwrap();
+        let cell = field.get_cell((10, 10));
+
+        assert!(cell.is_none());
+    }
+
+    #[test]
+    fn get_cell_mut_correctly_finds_the_cell_by_its_position() {
+        // let field = RefCell::new(Field::new(3, 3, 3).unwrap());
+        // let mut b = field.borrow_mut();
+        // let cell = b.get_cell_mut((0, 0));
+        //
+        // assert!(cell.is_some());
+        // assert_eq!(cell.unwrap(), &mut (field.borrow_mut().grid[0][0]));
+    }
+
+    #[test]
+    fn get_cell_mut_returns_none_for_nonexisting_cells() {
+        let mut field = Field::new(3, 3, 3).unwrap();
+        let cell = field.get_cell_mut((10, 10));
+
+        assert!(cell.is_none());
+    }
+
+    #[test]
+    fn open_cell_opens_the_requested_cell() {
+        let mut field = create_stub_mined_field(false);
+        field.update_mines_around_values();
+        field.open_cell((0, 2));
+
+        // First, make sure the target cell is opened.
+        assert!(field.get_cell((0, 2)).unwrap().is_open());
+
+        // Then get all the cells...
+        let mut all_cells: Vec<_> = field.grid.iter_mut().flatten().collect();
+
+        // ...and remove the target one. Make sure all the remaining cells are closed (no chain-opening in this case,
+        // because the target cell has two mines around it).
+        all_cells.remove(2);
+        assert!(all_cells.iter().all(|cell| !cell.is_open()))
+    }
+
+    #[test]
+    fn open_cell_chain_opens_empty_cells() {
+        let mut field = create_stub_mined_field(true);
+        field.update_mines_around_values();
+        field.open_cell((2, 0));
+
+        let open_cells_positions = [(2u8, 0u8), (3, 0), (3, 1), (3, 2)];
+        let closed_cells_positions = [
+            (0u8, 0u8),
+            (0, 1),
+            (0, 2),
+            (1, 0),
+            (1, 1),
+            (1, 2),
+            (2, 2),
+            (2, 3),
+        ];
+
+        // A meta-assertion. Make sure we're not forgetting any cells.
+        assert_eq!(
+            field.get_size().2,
+            (open_cells_positions.len() + closed_cells_positions.len()) as u16
+        );
+
+        // Make sure all the cells which need to be open are open.
+        open_cells_positions
+            .into_iter()
+            .map(|pos| field.get_cell(pos))
+            .all(|cell| cell.unwrap().is_open());
+
+        // Make sure all the cells which need to be closed are closed.
+
+        closed_cells_positions
+            .into_iter()
+            .map(|pos| field.get_cell(pos))
+            .all(|cell| !cell.unwrap().is_open());
+    }
+
+    #[test]
+    fn open_surrounding_cells_opens_correct_cells() {
+        let mut field = create_stub_mined_field(false);
+        field.update_mines_around_values();
+        field.get_cell_mut((0, 0)).unwrap().toggle_flag();
+        field.get_cell_mut((0, 1)).unwrap().toggle_flag();
+        field.get_cell_mut((1, 2)).unwrap().toggle_flag();
+        field.open_cell((1, 1));
+        field.open_surrounding_cells((1, 1));
+
+        // The above is the winning strategy. All the non-flagged cells should be opened by now.
+        assert!(field
+            .grid
+            .iter()
+            .flatten()
+            .filter(|cell| !cell.is_flagged())
+            .all(|cell| cell.is_open()));
+    }
+
+    #[test]
+    fn open_surrounding_cells_for_a_closed_cell_has_no_effect() {
+        let mut field = create_stub_mined_field(false);
+        field.update_mines_around_values();
+        field.get_cell_mut((0, 0)).unwrap().toggle_flag();
+        field.get_cell_mut((0, 1)).unwrap().toggle_flag();
+        field.get_cell_mut((1, 2)).unwrap().toggle_flag();
+        // field.open_cell((1, 1)); <- don't open the target cell
+        field.open_surrounding_cells((1, 1));
+
+        // All the cells must remain closed.
+        assert!(field.grid.iter().flatten().all(|cell| !cell.is_open()));
+    }
+
+    #[test]
+    fn open_surrounding_cells_for_a_flagged_cell_has_no_effect() {
+        let mut field = create_stub_mined_field(false);
+        field.update_mines_around_values();
+        field.get_cell_mut((0, 0)).unwrap().toggle_flag();
+        field.get_cell_mut((0, 1)).unwrap().toggle_flag();
+        field.get_cell_mut((1, 2)).unwrap().toggle_flag();
+        field.get_cell_mut((1, 1)).unwrap().toggle_flag(); // flag the target cell
+        field.open_surrounding_cells((1, 1));
+
+        // All the cells must remain closed.
+        assert!(field.grid.iter().flatten().all(|cell| !cell.is_open()));
+    }
+
+    #[test]
+    fn open_surrounding_cells_has_no_effect_on_incorrect_mines_around_amount() {
+        let mut field = create_stub_mined_field(false);
+        field.update_mines_around_values();
+        field.get_cell_mut((0, 0)).unwrap().toggle_flag();
+        field.get_cell_mut((0, 1)).unwrap().toggle_flag();
+        field.get_cell_mut((1, 2)).unwrap().toggle_flag();
+        field.open_cell((1, 1));
+        println!("{field}");
+        // So far so good, but add an excessive flag somewhere around
+        field.get_cell_mut((2, 0)).unwrap().toggle_flag();
+        println!("{field}");
+        field.open_surrounding_cells((1, 1));
+        println!("{field}");
+
+        // All the cells (except for the target one) must remain closed.
+        let mut all_cells: Vec<_> = field.grid.iter().flatten().collect();
+        all_cells.remove(4);
+        assert!(all_cells.into_iter().all(|cell| !cell.is_open()));
     }
 }
