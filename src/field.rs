@@ -86,8 +86,11 @@ impl Field {
     /// The method is guaranteed to place exactly the pre-configured number of mines, even after (if) excepting a
     /// particular cell.
     ///
-    /// As a side effect, it also increments the numerical values of the mined cells' adjacent cells, which represent
-    /// the number of mines around an adjacent cell.
+    /// As a side effect, it also calls the `self::update_mines_around_values` method.
+    ///
+    /// The method might fail with [`FieldError::InvalidExceptedCellPosition`] in case the excepted row's and/or
+    /// column's indices are beyond the field's bounds or with [`FieldError::MinesAlreadyExist`] in case the method is
+    /// called when there are mines in the field already.
     pub fn populate_with_mines(
         &mut self,
         excepted_cell_position: Option<(u8, u8)>, // `(row_index, column_index)`
@@ -109,7 +112,7 @@ impl Field {
         let mut flattened_field = self.grid.iter_mut().flatten().collect::<Vec<&mut Cell>>();
 
         // Return an error if there are mines already: can't populate with mines a field that's already been populated.
-        if flattened_field.into_iter().any(|cell| cell.is_mined()) {
+        if flattened_field.iter().any(|cell| cell.is_mined()) {
             return Err(FieldError::MinesAlreadyExist);
         }
 
@@ -124,19 +127,29 @@ impl Field {
         let mut rng = thread_rng();
         flattened_field.shuffle(&mut rng);
 
-        // Fill the first `number_of_mines` cells with mines and store them in a vector.
-        let cells_with_mines = flattened_field
+        // Fill the first `number_of_mines` cells with mines.
+        flattened_field
             .into_iter()
             .take(self.mines_amount as usize)
-            .map(|cell| {
+            .for_each(|cell| {
                 cell.mine();
-                cell
-            })
-            .collect::<Vec<&mut Cell>>();
+            });
+
+        self.update_mines_around_values();
+
+        Ok(())
+    }
+
+    /// The method increments the numerical values of the mined cells' adjacent cells, which represent the number of
+    /// mines around an adjacent cell.
+    fn update_mines_around_values(&mut self) {
+        // Flatten the field for an easier interaction with it.
+        let flattened_field = self.grid.iter_mut().flatten();
+        // Get mutable borrowings for all the mined cells.
+        let cells_with_mines = flattened_field.filter(|cell| cell.is_mined());
 
         // Get a flat vector of all the mined cells' adjacent cells' positions.
         let adjacent_cells_positions = cells_with_mines
-            .into_iter()
             // Get a mined cell's adjacent cells' positions.
             .flat_map(|cell| cell.get_adjacent_cells_positions())
             .collect::<Vec<(u8, u8)>>();
@@ -150,8 +163,6 @@ impl Field {
                     cell.increment_mines_around_amount();
                 }
             });
-
-        Ok(())
     }
 
     /// Returns the field's height (the number of rows), width (the number of columns) and the two values multiplied,
@@ -210,9 +221,10 @@ impl Field {
             let adjacent_cells_indices = target_cell.get_adjacent_cells_positions();
 
             let flagged_adjacent_cells_amount = adjacent_cells_indices
-                .into_iter()
-                .filter_map(|(row_index, column_index)| self.get_cell((row_index, column_index)))
+                .iter()
+                .filter_map(|(row_index, column_index)| self.get_cell((*row_index, *column_index)))
                 .filter(|adjacent_cell| adjacent_cell.is_flagged())
+                .collect::<Vec<&Cell>>()
                 .len() as u8;
 
             if let Some(a) = target_cell.get_mines_around_amount() {
@@ -245,7 +257,8 @@ impl Field {
             .iter()
             .flatten()
             .filter(|cell| cell.is_flagged())
-            .len()
+            .collect::<Vec<&Cell>>()
+            .len() as u16
     }
 
     /// Checks that there exists at least one mined cell which is open.
@@ -299,7 +312,7 @@ impl Debug for Field {
 
 impl Display for Field {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.grid[0].iter().enumerate().for_each(|(i, _)| {
+        for (i, _) in self.grid[0].iter().enumerate() {
             write!(
                 f,
                 "{:^3}",
@@ -309,7 +322,7 @@ impl Display for Field {
                     i.to_string()
                 }
             )?;
-        });
+        }
 
         writeln!(f)?;
 
@@ -329,8 +342,145 @@ impl Display for Field {
 
 #[cfg(test)]
 mod test {
+    use super::{Cell, Field, FieldError};
+
     #[test]
-    fn create_field_instance() {
-        unimplemented!()
+    fn create_field_instance_correct_params() {
+        let field = Field::new(3, 3, 3);
+        assert!(field.is_ok());
+
+        assert_eq!(
+            field.unwrap(),
+            Field {
+                grid: vec![
+                    vec![Cell::new((0, 0)), Cell::new((0, 1)), Cell::new((0, 2)),],
+                    vec![Cell::new((1, 0)), Cell::new((1, 1)), Cell::new((1, 2)),],
+                    vec![Cell::new((2, 0)), Cell::new((2, 1)), Cell::new((2, 2)),],
+                ],
+                mines_amount: 3
+            }
+        )
+    }
+
+    #[test]
+    fn create_field_fails_when_not_enough_cells() {
+        let field = Field::new(1, 1, 1);
+        assert!(field.is_err_and(|err| err == FieldError::NotEnoughCells));
+    }
+
+    #[test]
+    fn create_field_fails_when_not_enough_mines() {
+        let field = Field::new(3, 3, 0);
+        assert!(field.is_err_and(|err| err == FieldError::InvalidMinesAmount(8)));
+    }
+
+    #[test]
+    fn create_field_fails_when_too_many_mines() {
+        let field = Field::new(3, 3, 9);
+        assert!(field.is_err_and(|err| err == FieldError::InvalidMinesAmount(8)));
+    }
+
+    #[test]
+    fn the_field_gets_correctly_populated_with_mines() {
+        let mut field = Field::new(3, 3, 3).unwrap();
+        let result = field.populate_with_mines(None);
+
+        assert!(result.is_ok());
+        assert_eq!(
+            field.mines_amount,
+            field
+                .grid
+                .iter()
+                .flatten()
+                .filter(|cell| cell.is_mined())
+                .collect::<Vec<&Cell>>()
+                .len() as u16
+        );
+    }
+
+    #[test]
+    fn populate_with_mines_correctly_excepts_a_cell() {
+        for _ in 0..100 {
+            let mut field = Field::new(3, 3, 3).unwrap();
+            let result = field.populate_with_mines(Some((0, 0)));
+
+            assert!(result.is_ok());
+            assert!(!field.grid[0][0].is_mined())
+        }
+    }
+
+    #[test]
+    fn populate_with_mines_fails_on_invalid_excepted_cell_position() {
+        let mut field = Field::new(3, 3, 3).unwrap();
+        let result = field.populate_with_mines(Some((5, 5)));
+
+        assert!(result.is_err_and(|err| err == FieldError::InvalidExceptedCellPosition((5, 5))));
+    }
+
+    #[test]
+    fn populate_with_mines_fails_when_there_are_mines_already() {
+        let mut field = Field::new(3, 3, 3).unwrap();
+        field.populate_with_mines(None).unwrap();
+        let result = field.populate_with_mines(None);
+
+        assert!(result.is_err_and(|err| err == FieldError::MinesAlreadyExist));
+    }
+
+    fn create_stub_mined_field() -> Field {
+        // mine mine none
+        // none none mine
+        // none none none
+        Field {
+            grid: vec![
+                vec![
+                    {
+                        let mut cell = Cell::new((0, 0));
+                        cell.mine();
+                        cell
+                    },
+                    {
+                        let mut cell = Cell::new((0, 1));
+                        cell.mine();
+                        cell
+                    },
+                    Cell::new((0, 2)),
+                ],
+                vec![Cell::new((1, 0)), Cell::new((1, 1)), {
+                    let mut cell = Cell::new((1, 2));
+                    cell.mine();
+                    cell
+                }],
+                vec![Cell::new((2, 0)), Cell::new((2, 1)), Cell::new((2, 2))],
+            ],
+            mines_amount: 3,
+        }
+    }
+
+    #[test]
+    fn mines_around_values_get_updated_correctly() {
+        let mut field = create_stub_mined_field();
+        field.update_mines_around_values();
+
+        let result = field
+            .grid
+            .iter()
+            .flatten()
+            .map(|cell| cell.get_mines_around_amount())
+            .collect::<Vec<Option<u8>>>();
+
+        assert_eq!(
+            result,
+            [
+                None,
+                None,
+                Some(2),
+                Some(2),
+                Some(3),
+                None,
+                Some(0),
+                Some(1),
+                Some(1)
+            ]
+        );
     }
 }
