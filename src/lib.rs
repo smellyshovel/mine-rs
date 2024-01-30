@@ -1,11 +1,10 @@
-pub mod field;
+mod field;
 mod stopwatch;
 
-pub use field::cell::Cell;
-pub use field::{Field, FieldError};
+use field::{Cell, Field, FieldError};
 
 #[derive(Debug)]
-pub enum MinesweeperError {
+enum MinesweeperError {
     FieldError(FieldError),
     GameAlreadyEnded,
 }
@@ -17,7 +16,7 @@ impl From<FieldError> for MinesweeperError {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum MinesweeperStatus {
+enum MinesweeperStatus {
     /// After the field has been created, but before it has been initialized with mines and numbers.
     Pre,
     /// An ongoing game.
@@ -29,7 +28,7 @@ pub enum MinesweeperStatus {
 }
 
 #[derive(Debug)]
-pub enum MinesweeperAction {
+enum MinesweeperAction {
     /// A request to open a cell by its position.
     OpenCell((u8, u8)),
     /// A request to open the cells adjacent to the one with the provided position.
@@ -44,15 +43,15 @@ pub enum MinesweeperAction {
 }
 
 #[derive(Debug)]
-pub struct Minesweeper {
-    pub field: Field,
-    pub mines_amount: u16,
-    pub status: MinesweeperStatus,
+struct Minesweeper {
+    field: Field,
+    mines_amount: u16,
+    status: MinesweeperStatus,
     stopwatch: stopwatch::Stopwatch,
 }
 
 impl Minesweeper {
-    pub fn new(
+    fn new(
         rows_amount: u8,
         columns_amount: u8,
         mines_amount: u16,
@@ -67,15 +66,15 @@ impl Minesweeper {
         })
     }
 
-    pub fn get_cell(&self, position: (u8, u8)) -> Option<&Cell> {
+    fn get_cell(&self, position: (u8, u8)) -> Option<&Cell> {
         self.field.get_cell(position)
     }
 
-    pub fn get_flagged_cells_amount(&self) -> u16 {
+    fn get_flagged_cells_amount(&self) -> u16 {
         self.field.get_flagged_cells_amount()
     }
 
-    pub fn take_action(
+    fn take_action(
         &mut self,
         action_type: MinesweeperAction,
     ) -> Result<&MinesweeperStatus, MinesweeperError> {
@@ -122,7 +121,7 @@ impl Minesweeper {
                 }
             }
             MinesweeperAction::FlagCell(cell_position) => {
-                self.field.toggle_flag_for_cell(cell_position);
+                self.field.toggle_cell_flag(cell_position);
             }
         };
 
@@ -155,7 +154,7 @@ impl Minesweeper {
         }
     }
 
-    pub fn toggle_pause(&mut self) {
+    fn toggle_pause(&mut self) {
         // it's only possible to pause an ongoing game
         if let MinesweeperStatus::On = self.status {
             self.status = MinesweeperStatus::Pause;
@@ -166,7 +165,7 @@ impl Minesweeper {
         };
     }
 
-    pub fn get_time(&self) -> u64 {
+    fn get_time(&self) -> u64 {
         self.stopwatch.get_elapsed_time().as_secs()
     }
 }
