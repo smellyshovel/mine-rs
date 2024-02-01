@@ -175,6 +175,11 @@ impl Field {
         (rows_amount, columns_amount, cells_amount)
     }
 
+    // TODO needs tests
+    pub fn get_mines_amount(&self) -> u16 {
+        self.mines_amount
+    }
+
     /// Returns a read-only cell reference by its position or [`None`] if there's no cell at the given position.
     pub fn get_cell(&self, (row_index, column_index): (u8, u8)) -> Option<&Cell> {
         self.grid
