@@ -214,8 +214,8 @@ impl Field {
     /// Is an equivalent of the middle-click in the original
     /// implementation.
     ///
-    /// Won't produce any effect if the target cell is closed or flagged or if its numerical value is not the same
-    /// as the number of flags placed around it.
+    /// The method won't produce any effect if the target cell is closed or flagged or if its numerical value is not the
+    /// same as the number of flags placed around it.
     pub fn open_surrounding_cells(&mut self, (row_index, column_index): (u8, u8)) {
         if let Some(target_cell) = self.get_cell((row_index, column_index)) {
             let adjacent_cells_indices = target_cell.get_adjacent_cells_positions();
@@ -241,8 +241,6 @@ impl Field {
             }
         }
     }
-
-    // TODO below needs tests
 
     /// Toggles flag for the cell (if any) with the given position.
     pub fn toggle_cell_flag(&mut self, (row_index, columns_index): (u8, u8)) {
@@ -345,7 +343,6 @@ impl Display for Field {
 #[cfg(test)]
 mod test {
     use super::{Cell, Field, FieldError};
-    use std::cell::RefCell;
 
     #[test]
     fn create_field_instance_correct_params() {
@@ -430,10 +427,10 @@ mod test {
     }
 
     fn create_stub_mined_field(enlarged: bool) -> Field {
-        // mine mine none
-        // none none mine
-        // none none none
-        // none none none <- only when enlarged
+        // "mine", "mine", "none"
+        // "none", "none", "mine"
+        // "none", "none", "none"
+        // "none", "none", "none" <- only when enlarged
         let mut grid = vec![
             vec![
                 {
@@ -514,7 +511,7 @@ mod test {
     }
 
     #[test]
-    fn get_cell_returns_none_for_nonexisting_cells() {
+    fn get_cell_returns_none_for_non_existing_cells() {
         let field = Field::new(3, 3, 3).unwrap();
         let cell = field.get_cell((10, 10));
 
@@ -532,7 +529,7 @@ mod test {
     }
 
     #[test]
-    fn get_cell_mut_returns_none_for_nonexisting_cells() {
+    fn get_cell_mut_returns_none_for_non_existing_cells() {
         let mut field = Field::new(3, 3, 3).unwrap();
         let cell = field.get_cell_mut((10, 10));
 
@@ -551,7 +548,7 @@ mod test {
         // Then get all the cells...
         let mut all_cells: Vec<_> = field.grid.iter_mut().flatten().collect();
 
-        // ...and remove the target one. Make sure all the remaining cells are closed (no chain-opening in this case,
+        // ...And remove the target one. Make sure all the remaining cells are closed (no chain-opening in this case,
         // because the target cell has two mines around it).
         all_cells.remove(2);
         assert!(all_cells.iter().all(|cell| !cell.is_open()))
@@ -650,16 +647,104 @@ mod test {
         field.get_cell_mut((0, 1)).unwrap().toggle_flag();
         field.get_cell_mut((1, 2)).unwrap().toggle_flag();
         field.open_cell((1, 1));
-        println!("{field}");
+
         // So far so good, but add an excessive flag somewhere around
         field.get_cell_mut((2, 0)).unwrap().toggle_flag();
-        println!("{field}");
+
         field.open_surrounding_cells((1, 1));
-        println!("{field}");
 
         // All the cells (except for the target one) must remain closed.
         let mut all_cells: Vec<_> = field.grid.iter().flatten().collect();
         all_cells.remove(4);
         assert!(all_cells.into_iter().all(|cell| !cell.is_open()));
+    }
+
+    #[test]
+    fn toggle_cell_flag_correctly_toggles_the_flag() {
+        let mut field = Field::new(3, 3, 3).unwrap();
+        assert!(!field.get_cell((1, 1)).unwrap().is_flagged());
+
+        field.toggle_cell_flag((1, 1));
+        assert!(field.get_cell((1, 1)).unwrap().is_flagged());
+
+        field.toggle_cell_flag((1, 1));
+        assert!(!field.get_cell((1, 1)).unwrap().is_flagged());
+    }
+
+    #[test]
+    fn toggle_cell_flag_has_no_effect_if_the_cell_is_not_found() {
+        let mut field = Field::new(3, 3, 3).unwrap();
+
+        field.toggle_cell_flag((5, 5));
+        assert!(field.grid.iter().flatten().all(|cell| !cell.is_flagged()));
+    }
+
+    #[test]
+    fn get_flagged_cells_amount_returns_the_correct_amount_of_flagged_cells() {
+        let mut field = Field::new(3, 3, 3).unwrap();
+
+        field.toggle_cell_flag((0, 0));
+        field.toggle_cell_flag((0, 1));
+        field.toggle_cell_flag((0, 2));
+        field.toggle_cell_flag((1, 0));
+
+        assert_eq!(field.get_flagged_cells_amount(), 4);
+    }
+
+    #[test]
+    fn open_mines_amount_is_determined_correctly() {
+        let mut field = create_stub_mined_field(false);
+        field.update_mines_around_values();
+
+        assert!(!field.check_open_mines_exist());
+
+        // Open a mined cell.
+        field.open_cell((0, 1));
+
+        assert!(field.check_open_mines_exist());
+    }
+
+    #[test]
+    fn the_win_condition_is_checked_correctly() {
+        let mut field = create_stub_mined_field(false);
+        field.update_mines_around_values();
+
+        assert!(!field.check_all_non_mines_open());
+
+        field.get_cell_mut((0, 0)).unwrap().toggle_flag();
+        field.get_cell_mut((0, 1)).unwrap().toggle_flag();
+        field.get_cell_mut((1, 2)).unwrap().toggle_flag();
+        field.open_cell((1, 1));
+        field.open_surrounding_cells((1, 1));
+
+        // The above actions lead to winning the game. So by now the game is considered to be won, which is exactly what
+        // the method checks.
+        assert!(field.check_all_non_mines_open());
+    }
+
+    #[test]
+    fn missed_mines_get_opened_correctly() {
+        let mut field = create_stub_mined_field(false);
+        field.update_mines_around_values();
+
+        // There are 3 mines on the field. Flag only one of them, then call the `open_missed_mines` method and check
+        // that only the other two are open.
+        field.toggle_cell_flag((0, 1));
+        field.open_missed_mines();
+
+        assert!(field.get_cell((0, 0)).unwrap().is_open());
+        assert!(field.get_cell((1, 2)).unwrap().is_open());
+
+        // The total number of open cells by now should be two.
+        assert_eq!(
+            field
+                .grid
+                .iter()
+                .flatten()
+                .filter(|cell| cell.is_open())
+                .collect::<Vec<_>>()
+                .len(),
+            2
+        );
     }
 }
