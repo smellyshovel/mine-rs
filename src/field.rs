@@ -175,7 +175,10 @@ impl Field {
         (rows_amount, columns_amount, cells_amount)
     }
 
-    // TODO needs tests
+    /// Returns the field's number of mines.
+    ///
+    /// Does not care whether the field has already been populated with them or not. Instead, purely reflects the
+    /// configured value, rather than the real one.
     pub fn get_mines_amount(&self) -> u16 {
         self.mines_amount
     }
@@ -539,6 +542,16 @@ mod test {
         let cell = field.get_cell_mut((10, 10));
 
         assert!(cell.is_none());
+    }
+
+    #[test]
+    fn get_mines_amount_returns_the_configured_amount_of_mines() {
+        // Should be `3` in both cases, regardless of whether the field has been populated with mines or yet not.
+        let field = Field::new(3, 3, 3).unwrap();
+        assert_eq!(field.get_mines_amount(), 3);
+
+        let field = create_stub_mined_field(false);
+        assert_eq!(field.get_mines_amount(), 3);
     }
 
     #[test]
