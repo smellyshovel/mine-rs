@@ -167,7 +167,7 @@ impl Field {
 
     /// Returns the field's height (the number of rows), width (the number of columns) and the two values multiplied,
     /// which is effectively the total number of cells.
-    fn get_size(&self) -> (u8, u8, u16) {
+    pub fn get_size(&self) -> (u8, u8, u16) {
         let rows_amount = self.grid.len() as u8;
         let columns_amount = self.grid.first().map(|row| row.len()).unwrap_or(0) as u8;
         let cells_amount = rows_amount as u16 * columns_amount as u16;
