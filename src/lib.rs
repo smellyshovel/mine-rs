@@ -76,10 +76,12 @@ impl Minesweeper {
         })
     }
 
+    /// Returns the game's field borrowing.
     pub fn get_field(&self) -> &Field {
         &self.field
     }
 
+    /// Returns the game's status borrowing.
     pub fn get_status(&self) -> &MinesweeperStatus {
         &self.status
     }
