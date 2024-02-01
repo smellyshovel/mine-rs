@@ -6,8 +6,8 @@ use crate::game_ui::render_game;
 use crate::menu_ui::render_menu;
 use crate::tui::Render;
 use crate::update::{ControlsSupport, MoveCursorDirection};
-pub use bomber::Minesweeper;
-use bomber::{MinesweeperAction, MinesweeperError, MinesweeperStatus};
+pub use miners::Minesweeper;
+use miners::{MinesweeperAction, MinesweeperError, MinesweeperStatus};
 use ratatui::Frame;
 use std::cmp;
 
@@ -18,9 +18,9 @@ const DEFAULT_MINES_AMOUNT: u16 = 40;
 /// The terminal application
 #[derive(Debug)]
 pub struct App {
-    /// The app can be represented by one variant at a time.
+    /// The app.rs can be represented by one variant at a time.
     pub variant: AppVariant,
-    /// Indicates that the main application loop should be broken on the next tick and thus the app should quit.
+    /// Indicates that the main application loop should be broken on the next tick and thus the app.rs should quit.
     pub should_quit: bool,
 }
 
@@ -157,7 +157,10 @@ impl ControlsSupport for AppVariant {
     fn pause(&mut self) {
         // it's only possible to toggle the pause for the game, not for the menu
         if let AppVariant::InGame(game) = self {
-            game.game.toggle_pause();
+            // don't toggle the pause when the game's wating for leave confirnation
+            if !game.awaiting_leave_confirmation {
+                game.game.toggle_pause();
+            }
         }
     }
 
@@ -186,7 +189,7 @@ impl Render for AppVariant {
     }
 }
 
-/// The Menu app variant
+/// The Menu app.rs variant
 #[derive(Debug)]
 pub struct AppMenu {
     pub rows_amount: u8,
@@ -273,7 +276,7 @@ impl AppMenu {
     }
 }
 
-/// The Game app variant
+/// The Game app.rs variant
 #[derive(Debug)]
 pub struct AppGame {
     /// The game instance.
@@ -314,7 +317,7 @@ pub struct AppGame {
     pub awaiting_leave_confirmation: bool,
     /// Whether the leave was confirmed and now it's allowed to go back to the menu.
     pub should_leave: bool,
-    /// Whether the app should urgently leave without asking for a confirmation
+    /// Whether the app.rs should urgently leave without asking for a confirmation
     pub should_emergency_leave: bool,
 }
 
@@ -402,8 +405,10 @@ impl AppGame {
     }
 
     fn toggle_flag(&mut self) -> Result<(), MinesweeperError> {
-        self.game
-            .take_action(MinesweeperAction::FlagCell(self.cursor_position))?;
+        if let MinesweeperStatus::On = self.game.get_status() {
+            self.game
+                .take_action(MinesweeperAction::FlagCell(self.cursor_position))?;
+        }
 
         Ok(())
     }

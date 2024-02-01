@@ -23,7 +23,7 @@ pub fn render_menu(menu: &mut AppMenu, frame: &mut Frame) {
     // The root container is the whole terminal rectangle.
     let root_container = frame.size();
 
-    // The app layout consists of the menu, error and legend containers. The menu container's size is first calculated
+    // The app.rs layout consists of the menu, error and legend containers. The menu container's size is first calculated
     // as the remainder of the height after all the other allocations.
     let (menu_container, error_container, legend_container) = create_app_layout(&root_container);
 

@@ -1,10 +1,10 @@
 //! The terminal application updater.
 
 use crate::app::App;
-use bomber::MinesweeperError;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use miners::MinesweeperError;
 
-/// The support for the app controls. Each app variant must know what to do when something's being requested.
+/// The support for the app.rs controls. Each app.rs variant must know what to do when something's being requested.
 pub trait ControlsSupport {
     fn move_cursor(&mut self, direction: MoveCursorDirection);
     fn perform_main_action(&mut self) -> Result<(), MinesweeperError>;

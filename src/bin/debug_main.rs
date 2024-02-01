@@ -1,5 +1,4 @@
-use bo::{Minesweeper, MinesweeperAction, MinesweeperStatus};
-use bomber::field::Field;
+use miners::{field::Field, Minesweeper, MinesweeperAction, MinesweeperStatus};
 
 fn get_action() -> Option<MinesweeperAction> {
     println!("Enter the desired action and the target cell's coordinates (e.g. `f 3,5` to flag the 6th cell on the 4th line):");
@@ -38,7 +37,7 @@ fn print_field(field: &Field) {
 fn main() {
     let mut game = Minesweeper::new(9, 24, 18).expect("Couldn't create a game instance!");
 
-    print_field(&game.field);
+    print_field(&game.get_field());
 
     loop {
         let Some(action) = get_action() else {
@@ -54,6 +53,6 @@ fn main() {
             break;
         }
 
-        print_field(&game.field);
+        print_field(&game.get_field());
     }
 }

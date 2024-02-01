@@ -1,7 +1,7 @@
 //! The game renderer functions.
 
 use crate::app::AppGame;
-use bomber::{field::cell::Cell, MinesweeperStatus};
+use miners::{field::cell::Cell, MinesweeperStatus};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     prelude::Frame,
@@ -71,7 +71,7 @@ pub fn render_game(app: &mut AppGame, frame: &mut Frame) {
     // the root container is the whole terminal rectangle
     let root_container = frame.size();
 
-    // the app layout consists of the field, stats and legend containers.
+    // the app.rs layout consists of the field, stats and legend containers.
     // The stats are represented by the flags-, mines- and time-info containers.
     let (
         field_container,

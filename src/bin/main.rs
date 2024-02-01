@@ -1,9 +1,9 @@
-pub mod app;
-pub mod event;
-pub mod game_ui;
-pub mod menu_ui;
-pub mod tui;
-pub mod update;
+mod app;
+mod event;
+mod game_ui;
+mod menu_ui;
+mod tui;
+mod update;
 
 use app::App;
 use clap::Parser;
@@ -29,7 +29,7 @@ fn main() -> Result<()> {
 
     // Create the terminal application.
     let mut app = App::new(args.height, args.width, args.mines)
-        .expect("Couldn't create the app instance. Bad parameters?");
+        .expect("Couldn't create the app.rs instance. Bad parameters?");
 
     // Initialize the terminal user interface.
     let backend = CrosstermBackend::new(std::io::stderr());
