@@ -1,4 +1,4 @@
-mod field;
+pub mod field;
 mod stopwatch;
 
 use field::{Field, FieldError};

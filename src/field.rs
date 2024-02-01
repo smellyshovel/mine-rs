@@ -1,4 +1,4 @@
-mod cell;
+pub mod cell;
 
 use cell::Cell;
 use rand::{prelude::SliceRandom, thread_rng};

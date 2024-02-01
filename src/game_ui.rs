@@ -1,7 +1,7 @@
 //! The game renderer functions.
 
-use crate::app::{AppGame, Cell};
-use bomber::MinesweeperStatus;
+use crate::app::AppGame;
+use bomber::{field::cell::Cell, MinesweeperStatus};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     prelude::Frame,
@@ -80,7 +80,7 @@ pub fn render_game(app: &mut AppGame, frame: &mut Frame) {
     ) = create_app_layout(&root_container);
 
     // the amounts of rows and columns we need to show totally (the real field size)
-    let (total_rows_amount, total_columns_amount, _) = app.game.field.get_size();
+    let (total_rows_amount, total_columns_amount, _) = app.game.get_field().get_size();
 
     // update the amounts of rows and columns that we can actually show (respecting the container's size)
     app.visible_rows_amount = calculate_visible_rows_amount(&field_container, total_rows_amount);
@@ -146,7 +146,7 @@ pub fn render_game(app: &mut AppGame, frame: &mut Frame) {
     });
 
     // 4. Render the paused game popup if the game is paused or otherwise the cells
-    if let MinesweeperStatus::Pause = app.game.status {
+    if let MinesweeperStatus::Pause = app.game.get_status() {
         // 4.a.1. Render an empty block in place of the grid
         frame.render_widget(Block::default().bg(APP_BG_COLOR), grid_container);
 
@@ -168,6 +168,7 @@ pub fn render_game(app: &mut AppGame, frame: &mut Frame) {
 
                     let cell = app
                         .game
+                        .get_field()
                         .get_cell((real_row_index, real_column_index))
                         .expect("Fatal error: couldn't find the cell by its coordinates.");
 
@@ -176,7 +177,7 @@ pub fn render_game(app: &mut AppGame, frame: &mut Frame) {
                     let grid_cell = build_cell_widget(
                         cell,
                         is_selected,
-                        app.game.status == MinesweeperStatus::End(false),
+                        app.game.get_status() == &MinesweeperStatus::End(false),
                     );
                     frame.render_widget(grid_cell, *cell_container)
                 });
@@ -185,11 +186,11 @@ pub fn render_game(app: &mut AppGame, frame: &mut Frame) {
 
     // 5. Render the stats
     frame.render_widget(
-        build_flags_info_widget(app.game.get_flagged_cells_amount()),
+        build_flags_info_widget(app.game.get_field().get_flagged_cells_amount()),
         flags_info_container,
     );
     frame.render_widget(
-        build_mines_info_widget(app.game.mines_amount),
+        build_mines_info_widget(app.game.get_field().get_mines_amount()),
         mines_info_container,
     );
 
@@ -202,8 +203,8 @@ pub fn render_game(app: &mut AppGame, frame: &mut Frame) {
     frame.render_widget(build_legend_widget(), legend_container);
 
     // 7. Render the outcome (victory/loss) popup in case the game has ended
-    if let MinesweeperStatus::End(is_victory) = app.game.status {
-        let first_line = if is_victory {
+    if let MinesweeperStatus::End(is_victory) = app.game.get_status() {
+        let first_line = if *is_victory {
             VICTORY_LINE_TEXT
         } else {
             LOSS_LINE_TEXT
@@ -217,7 +218,7 @@ pub fn render_game(app: &mut AppGame, frame: &mut Frame) {
             .map(|s| s.to_string())
             .collect();
 
-        let border_color = if is_victory {
+        let border_color = if *is_victory {
             OUTCOME_POPUP_VICTORY_BORDER_COLOR
         } else {
             OUTCOME_POPUP_LOSS_BORDER_COLOR

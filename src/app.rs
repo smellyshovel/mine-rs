@@ -6,8 +6,8 @@ use crate::game_ui::render_game;
 use crate::menu_ui::render_menu;
 use crate::tui::Render;
 use crate::update::{ControlsSupport, MoveCursorDirection};
-pub use bomber::{Cell, Minesweeper};
-use bomber::{FieldError, MinesweeperAction, MinesweeperError, MinesweeperStatus};
+pub use bomber::Minesweeper;
+use bomber::{MinesweeperAction, MinesweeperError, MinesweeperStatus};
 use ratatui::Frame;
 use std::cmp;
 
@@ -58,11 +58,11 @@ impl App {
 
     pub fn back_to_menu(&mut self) {
         if let AppVariant::InGame(game) = &self.variant {
-            let (rows_amount, columns_amount, _) = game.game.field.get_size();
+            let (rows_amount, columns_amount, _) = game.game.get_field().get_size();
             self.variant = AppVariant::InMenu(AppMenu::new(
                 Some(rows_amount),
                 Some(columns_amount),
-                Some(game.game.mines_amount),
+                Some(game.game.get_field().get_mines_amount()),
             ))
         };
     }
@@ -340,11 +340,11 @@ impl AppGame {
 
     fn move_cursor(&mut self, direction: MoveCursorDirection) {
         // don't move the cursor when the game's paused or when it's already finished
-        if let MinesweeperStatus::Pause | MinesweeperStatus::End(_) = self.game.status {
+        if let MinesweeperStatus::Pause | MinesweeperStatus::End(_) = self.game.get_status() {
             return;
         }
 
-        let (field_height, field_width, _) = self.game.field.get_size();
+        let (field_height, field_width, _) = self.game.get_field().get_size();
         let (cy, cx) = self.cursor_position;
 
         self.cursor_position = match direction {
@@ -386,10 +386,10 @@ impl AppGame {
             return Ok(None);
         }
 
-        if let MinesweeperStatus::End(_) = self.game.status {
+        if let MinesweeperStatus::End(_) = self.game.get_status() {
             // if the game has ended, start a new one
-            let (h, w, _) = self.game.field.get_size();
-            return Ok(Some((h, w, self.game.mines_amount)));
+            let (h, w, _) = self.game.get_field().get_size();
+            return Ok(Some((h, w, self.game.get_field().get_mines_amount())));
         } else {
             // otherwise, open a cell or surrounding cells
             self.game
@@ -409,7 +409,7 @@ impl AppGame {
     }
 
     fn confirm_or_cancel_leave_or_leave(&mut self) {
-        if let MinesweeperStatus::End(_) = self.game.status {
+        if let MinesweeperStatus::End(_) = self.game.get_status() {
             // if the game has ended, just leave without asking for confirmation
             self.leave();
         } else {
