@@ -6,7 +6,7 @@ use stopwatch::Stopwatch;
 
 /// The enum represents the variants of everything that can possibly go wrong during the game.
 #[derive(Debug)]
-enum MinesweeperError {
+pub enum MinesweeperError {
     /// This is used when something's wrong with the field. The `FieldError` variant is just a wrapper for the original
     /// [`FieldError`] type. The [`From`] trait is implemented for the `MinesweeperError` to en-wrap with it
     /// `FieldError`s.
@@ -23,7 +23,7 @@ impl From<FieldError> for MinesweeperError {
 
 /// The status of a game.
 #[derive(Debug, Eq, PartialEq)]
-enum MinesweeperStatus {
+pub enum MinesweeperStatus {
     /// After the field has been created, but before it has been initialized with mines and numbers.
     Pre,
     /// An ongoing game.
@@ -36,7 +36,7 @@ enum MinesweeperStatus {
 
 /// Describes all the possible action a user can take.
 #[derive(Debug)]
-enum MinesweeperAction {
+pub enum MinesweeperAction {
     /// A request to open a cell by its position.
     OpenCell((u8, u8)),
     /// A request to open the cells adjacent to the one with the provided position.
@@ -52,7 +52,7 @@ enum MinesweeperAction {
 
 /// The struct representing a Minesweeper game itself.
 #[derive(Debug)]
-struct Minesweeper {
+pub struct Minesweeper {
     /// The field used in the game.
     field: Field,
     /// The game status.
@@ -62,7 +62,7 @@ struct Minesweeper {
 }
 
 impl Minesweeper {
-    fn new(
+    pub fn new(
         rows_amount: u8,
         columns_amount: u8,
         mines_amount: u16,
@@ -74,6 +74,14 @@ impl Minesweeper {
             status: MinesweeperStatus::Pre,
             stopwatch: Stopwatch::default(),
         })
+    }
+
+    pub fn get_field(&self) -> &Field {
+        &self.field
+    }
+
+    pub fn get_status(&self) -> &MinesweeperStatus {
+        &self.status
     }
 
     /// The method performs the requested action, updates the status of the game and returns it.
