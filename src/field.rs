@@ -1,6 +1,6 @@
 mod cell;
 
-pub use cell::Cell;
+use cell::Cell;
 use rand::{prelude::SliceRandom, thread_rng};
 use std::fmt::{Debug, Display, Formatter};
 

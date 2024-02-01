@@ -1,11 +1,17 @@
 mod field;
 mod stopwatch;
 
-use field::{Cell, Field, FieldError};
+use field::{Field, FieldError};
+use stopwatch::Stopwatch;
 
+/// The enum represents the variants of everything that can possibly go wrong during the game.
 #[derive(Debug)]
 enum MinesweeperError {
+    /// This is used when something's wrong with the field. The `FieldError` variant is just a wrapper for the original
+    /// [`FieldError`] type. The [`From`] trait is implemented for the `MinesweeperError` to en-wrap with it
+    /// `FieldError`s.
     FieldError(FieldError),
+    /// The error indicates that the game has already ended, and therefore the requested action could not be performed.
     GameAlreadyEnded,
 }
 
@@ -15,6 +21,7 @@ impl From<FieldError> for MinesweeperError {
     }
 }
 
+/// The status of a game.
 #[derive(Debug, Eq, PartialEq)]
 enum MinesweeperStatus {
     /// After the field has been created, but before it has been initialized with mines and numbers.
@@ -27,13 +34,14 @@ enum MinesweeperStatus {
     End(bool),
 }
 
+/// Describes all the possible action a user can take.
 #[derive(Debug)]
 enum MinesweeperAction {
     /// A request to open a cell by its position.
     OpenCell((u8, u8)),
     /// A request to open the cells adjacent to the one with the provided position.
     OpenSurroundingCells((u8, u8)),
-    /// This action is a combination of the 2 ones above with it's automatically deciding which one to use exactly.
+    /// This action is a combination of the two ones above with it's automatically deciding which one to use exactly.
     ///
     /// This is intended to be used with frontends which have a limited number of inputs, so that both actions could use
     /// the same trigger.
@@ -42,12 +50,15 @@ enum MinesweeperAction {
     FlagCell((u8, u8)),
 }
 
+/// The struct representing a Minesweeper game itself.
 #[derive(Debug)]
 struct Minesweeper {
+    /// The field used in the game.
     field: Field,
-    mines_amount: u16,
+    /// The game status.
     status: MinesweeperStatus,
-    stopwatch: stopwatch::Stopwatch,
+    /// The in-game stopwatch. It's started as soon as the first cell gets opened and is paused when the game is paused.
+    stopwatch: Stopwatch,
 }
 
 impl Minesweeper {
@@ -60,36 +71,30 @@ impl Minesweeper {
 
         Ok(Minesweeper {
             field,
-            mines_amount,
             status: MinesweeperStatus::Pre,
-            stopwatch: stopwatch::Stopwatch::default(),
+            stopwatch: Stopwatch::default(),
         })
     }
 
-    fn get_cell(&self, position: (u8, u8)) -> Option<&Cell> {
-        self.field.get_cell(position)
-    }
-
-    fn get_flagged_cells_amount(&self) -> u16 {
-        self.field.get_flagged_cells_amount()
-    }
-
-    fn take_action(
+    /// The method performs the requested action, updates the status of the game and returns it.
+    ///
+    /// Might fail with a [`MinesweeperError`] in case something goes wrong.
+    pub fn take_action(
         &mut self,
         action_type: MinesweeperAction,
     ) -> Result<&MinesweeperStatus, MinesweeperError> {
-        // early-return an error if trying to take an action when the game has already ended
+        // Early-return an error if trying to take an action when the game has already ended.
         if let MinesweeperStatus::End(_) = self.status {
             return Err(MinesweeperError::GameAlreadyEnded);
         }
 
-        // early-return the current status (in other words, don't do anything) if trying to take some action when the
-        // game is paused
+        // Early-return the current status (in other words, don't do anything) if trying to take some action when the
+        // game is paused.
         if let MinesweeperStatus::Pause = self.status {
             return Ok(&MinesweeperStatus::Pause);
         }
 
-        // match and perform the requested action
+        // Match and perform the requested action.
         match action_type {
             MinesweeperAction::OpenCell(cell_position) => {
                 if let MinesweeperStatus::On = self.status {
@@ -107,15 +112,15 @@ impl Minesweeper {
                 self.field.open_surrounding_cells(cell_position);
             }
             MinesweeperAction::OpenCellOrSurroundingCells(cell_position) => {
-                let target_cell = self.get_cell(cell_position);
+                let target_cell = self.field.get_cell(cell_position);
 
                 if let Some(cell) = target_cell {
-                    // we're not calling the underlying method here directly because this action is just an alias
+                    // We're not calling the underlying method here directly because this action is just an alias.
                     if cell.is_open() {
-                        // for the already-open cells take the `OpenSurroundingCells` action
+                        // For the already-open cells, perform the `OpenSurroundingCells` action.
                         self.take_action(MinesweeperAction::OpenSurroundingCells(cell_position))?;
                     } else {
-                        // for the closed cells take the `OpenCell` action
+                        // For the closed ones, perform the `OpenCell` action.
                         self.take_action(MinesweeperAction::OpenCell(cell_position))?;
                     }
                 }
@@ -129,6 +134,8 @@ impl Minesweeper {
         Ok(&self.status)
     }
 
+    /// A private helper that updates the game status. Should be called after each action that can potentially change
+    /// it.
     fn update_status(&mut self) {
         if let Some(victory) = self.check_victory_or_loss() {
             if !victory {
@@ -141,6 +148,8 @@ impl Minesweeper {
         }
     }
 
+    /// The method is a private helper that determines whether the game has been lost or won. If neither (ongoing),
+    /// returns the `None` value.
     fn check_victory_or_loss(&self) -> Option<bool> {
         let loss = self.field.check_open_mines_exist();
         let victory = self.field.check_all_non_mines_open();
@@ -154,7 +163,10 @@ impl Minesweeper {
         }
     }
 
-    fn toggle_pause(&mut self) {
+    /// Toggles the pause on the game's stopwatch.
+    ///
+    /// The frontends should take care of hiding the field during pauses themselves.
+    pub fn toggle_pause(&mut self) {
         // it's only possible to pause an ongoing game
         if let MinesweeperStatus::On = self.status {
             self.status = MinesweeperStatus::Pause;
@@ -165,7 +177,8 @@ impl Minesweeper {
         };
     }
 
-    fn get_time(&self) -> u64 {
+    /// Returns the total amount of time the game has been in the `On` status.
+    pub fn get_time(&self) -> u64 {
         self.stopwatch.get_elapsed_time().as_secs()
     }
 }
