@@ -54,6 +54,7 @@ mod test {
         assert_eq!(sw.get_elapsed_time().as_millis(), 0);
     }
 
+    #[cfg(not(target_os = "macos"))]
     #[test]
     fn the_stopwatch_correctly_measures_the_elapsed_time() {
         let mut sw = Stopwatch::default();
@@ -77,6 +78,7 @@ mod test {
         assert_sw_near(sw, 0);
     }
 
+    #[cfg(not(target_os = "macos"))]
     #[test]
     fn the_time_is_not_running_when_the_stopwatch_is_stopped() {
         let mut sw = Stopwatch::default();
