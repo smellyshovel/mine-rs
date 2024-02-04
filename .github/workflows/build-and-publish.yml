@@ -1,0 +1,40 @@
+name: Build and Publish
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v3    
+      - name: Run tests
+        run: cargo test --verbose
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v3    
+      - name: Build
+        run: cargo build --release --verbose
+      - name: Create GitHub Release
+        id: create_github_release
+        uses: ncipollo/release-action@v1.10.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag: v1.0.0
+          name: v1.0.0
+          generateReleaseNotes: true
+          artifacts: "./target/release/main"
