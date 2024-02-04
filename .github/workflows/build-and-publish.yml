@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Tag  
-        run: git tag v0.2.0 && git push --tags
+        run: git tag v0.2.1 && git push --tags
   release:
     needs: [tag]
     name: Release
@@ -55,4 +55,5 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: miners-*
+          generate-release-notes: true
           
