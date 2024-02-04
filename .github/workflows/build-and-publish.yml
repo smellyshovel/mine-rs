@@ -33,7 +33,8 @@ jobs:
         with:
           name: miners-${{ matrix.os }}
           path: target/release/
-  publish:
+  release:
+    needs: [test, build]
     name: Release
     runs-on: ubuntu-latest
     steps:
