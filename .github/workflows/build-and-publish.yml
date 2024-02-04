@@ -56,6 +56,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v0.2.0
-          files: miners/miners/miners-*
+          files: miners-*
           generate_release_notes: true
           
