@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v3
       - name: Run tests
@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v3
       - name: Build  
@@ -50,8 +50,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: miners-*
-      - name: Meta
-        run: pwd && dir && ls -R
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
