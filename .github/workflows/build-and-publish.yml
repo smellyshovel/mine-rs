@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run tests
-        run: ls / # cargo test --verbose
+        run: cargo test --verbose
   build:
     name: Build for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build  
-        run: ls / # cargo build --release --verbose
+        run: cargo build --release --verbose
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.0
         with:
@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Tag  
-        run: git tag v0.2.2 && git push --tags
+        run: git tag v0.2.0 && git push --tags
   release:
     needs: [tag]
     name: Release
@@ -54,7 +54,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.2.2
+          tag_name: v0.2.0
           files: miners-*
           generate-release-notes: true
           
