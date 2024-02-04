@@ -38,10 +38,9 @@ jobs:
     name: Tag
     runs-on: ubuntu-latest
     steps:
-      - name: Tag
       - uses: actions/checkout@v3
-      - run: git tag v0.2.0
-      - run: git push --tags
+      - name: Tag  
+        run: git tag v0.2.0 && git push --tags
   release:
     needs: [tag]
     name: Release
