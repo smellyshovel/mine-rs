@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v3    
+      - uses: actions/checkout@v3
       - name: Run tests
         run: ls / # cargo test --verbose
   build:
@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v3    
+      - uses: actions/checkout@v3
       - name: Build  
         run: ls / # cargo build --release --verbose
       - name: Upload a Build Artifact
@@ -39,9 +39,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Tag
-        run: |
-          git tag v0.2.0
-          git push --tags
+      - uses: actions/checkout@v3
+      - run: git tag v0.2.0
+      - run: git push --tags
   release:
     needs: [tag]
     name: Release
