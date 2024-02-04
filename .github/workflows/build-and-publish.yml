@@ -49,12 +49,11 @@ jobs:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: miners
           pattern: miners-*
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v0.2.0
-          files: miners-*
+          files: miners/miners-*
           generate-release-notes: true
           
