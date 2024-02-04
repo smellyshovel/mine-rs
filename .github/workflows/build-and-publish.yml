@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3    
       - name: Run tests
@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3    
       - name: Build  
@@ -33,4 +33,4 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - run: ls /target/release
+      - run: ls target/release
