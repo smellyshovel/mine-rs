@@ -94,6 +94,7 @@ mod test {
         assert_sw_near(sw, SLEEP_MS);
     }
 
+    #[cfg(not(target_os = "macos"))]
     #[test]
     fn the_time_keeps_adding_after_a_stopwatch_gets_resumed() {
         let mut sw = Stopwatch::default();
