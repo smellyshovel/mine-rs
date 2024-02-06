@@ -50,7 +50,13 @@ jobs:
           token: ${{ github.token }}
           branch: main
       - name: Tag  
-        run: git tag ${{ steps.semver.outputs.next }} && git push --tags
+        run: git tag ${{ steps.semver.outputs.next }}
+      - name: Update Cargo.toml respectively
+        run: sed -i 's/version = "[^"]*"/version = "${{ steps.semver.outputs.next }}"/' Cargo.toml
+      - name: Save changes
+        run: |
+          git push
+          git push --tags
   release:
     needs: [tag]
     name: Release
