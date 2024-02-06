@@ -39,6 +39,8 @@ jobs:
     needs: [test, build]
     name: Tag
     runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.semver.outputs.next }}
     steps:
       - uses: actions/checkout@v3
       - name: Get Next Version
@@ -70,7 +72,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.semver.outputs.next }}
+          tag_name: ${{ needs.tag.outputs.new_tag }}
           files: miners-*/miners-*
           generate_release_notes: true
           
