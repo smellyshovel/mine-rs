@@ -52,6 +52,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: miners-*
+      - name: Rename executables
+        run: |
+          cd miners-ubuntu-latest
+          mv main miners-ubuntu
+          cd ../miners-macOS-latest
+          mv main miners-macOS
+          cd ../miners-windows-latest
+          mv main.exe miners-windows.exe
+          cd ../
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
