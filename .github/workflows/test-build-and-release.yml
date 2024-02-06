@@ -1,4 +1,4 @@
-name: Build and Publish
+name: Test, Build and Release
 
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
       - name: Tag  
         run: git tag ${{ steps.semver.outputs.next }}
       - name: Update Cargo.toml respectively
-        run: sed -i '0,/version = "[^"]*"/s/version = "[^"]*"/version = "${{ steps.semver.outputs.next }}"/' Cargo.toml
+        run: sed -i '0,/version = "[^"]*"/s/version = "[^"]*"/version = "${{ steps.semver.outputs.nextStrict }}"/' Cargo.toml
       - name: Save changes
         run: |
           git config user.name github-actions
