@@ -104,6 +104,7 @@ jobs:
       - name: Update Release
         uses: ncipollo/release-action@v1.12.0
         with:
+          artifacts: miners-*/miners-*
           allowUpdates: true
           draft: false
           name: ${{ steps.semver.outputs.next }}
