@@ -40,8 +40,8 @@ jobs:
     name: Tag
     runs-on: ubuntu-latest
     outputs:
+      current_tag: ${{ steps.semver.outputs.current }}
       new_tag: ${{ steps.semver.outputs.next }}
-      changes: ${{ steps.changelog.outputs.changes }}
     steps:
       - uses: actions/checkout@v3
       - name: Get Next Version
@@ -84,29 +84,28 @@ jobs:
           prerelease: true
           draft: false
           commit: ${{ github.sha }}
-          name: ${{ steps.semver.outputs.next }}
-          tag: ${{ steps.semver.outputs.next }}
-          body: '*pending*'
+          name: ${{ needs.tag.outputs.new_tag }}
+          tag: ${{ needs.tag.outputs.new_tag }}
+          body: '*Pending...*'
       - name: Update CHANGELOG
         id: changelog
         uses: requarks/changelog-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.semver.outputs.next }}
+          tag: ${{ needs.tag.outputs.new_tag }}
           writeToFile: false
-
       - name: Update Release
         uses: ncipollo/release-action@v1.12.0
         with:
           artifacts: miners-*/miners-*
           allowUpdates: true
           draft: false
-          name: ${{ steps.semver.outputs.next }}
-          tag: ${{ steps.semver.outputs.next }}
+          name: ${{ needs.tag.outputs.new_tag }}
+          tag: ${{ needs.tag.outputs.new_tag }}
           body: |
             ## What's Changed :eyes:
     
             ${{ steps.changelog.outputs.changes }}
     
-            **Full Changelog**: https://github.com/czernika/tailwindcss-grid-area/compare//${{ steps.semver.outputs.current }}...${{ steps.semver.outputs.next }}
+            **Full Changelog**: https://github.com/smellyshovel/miners/compare//${{ needs.tag.outputs.current_tag }}...${{ needs.tag.outputs.new_tag }}
           token: ${{ secrets.GITHUB_TOKEN }}
