@@ -43,12 +43,6 @@ jobs:
       new_tag: ${{ steps.semver.outputs.next }}
       changes: ${{ steps.changelog.outputs.changes }}
     steps:
-      - name: Update CHANGELOG
-        id: changelog
-        uses: requarks/changelog-action@v1
-        with:
-          token: ${{ github.token }}
-          tag: ${{ github.ref_name }}
       - uses: actions/checkout@v3
       - name: Get Next Version
         id: semver
