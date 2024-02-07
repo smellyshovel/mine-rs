@@ -2,13 +2,7 @@ name: Test
 run-name: Test
 
 on:
-  workflow_run:
-    workflows:
-      - Check
-    branches:
-      - main
-    types: 
-      - completed
+  - workflow_call
 
 env:
   CARGO_TERM_COLOR: always
