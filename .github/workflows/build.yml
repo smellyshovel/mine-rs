@@ -1,5 +1,5 @@
-name: Test
-run-name: Test
+name: Build
+run-name: Build
 
 on:
   - workflow_call
@@ -8,7 +8,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  Test:
+  Build:
     strategy:
       matrix:
         os:
@@ -17,9 +17,9 @@ jobs:
           - MacOS
         version:
           - latest
-    name: Test on ${{ matrix.os }}
+    name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-${{ matrix.version }}
     steps:
       - uses: actions/checkout@v4
-      - name: Test
-        run: cargo test --verbose
+      - name: Build
+        run: cargo build --release --verbose

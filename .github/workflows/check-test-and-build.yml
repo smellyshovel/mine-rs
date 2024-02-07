@@ -1,0 +1,22 @@
+name: Check, Test and Build
+run-name: Check, Test and Build
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  Check:
+    uses: ./.github/workflows/check.yml
+  Test:
+    needs:
+      - Check
+    uses: ./.github/workflows/test.yml
+  Build:
+    needs:
+      - Check
+    uses: ./.github/workflows/build.yml
