@@ -1,16 +1,21 @@
 name: Test
+run-name: Test
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - Check
     branches:
       - main
+    types: 
+      - completed
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-
-  test:
+  Test:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         os: 
@@ -19,8 +24,7 @@ jobs:
           - macOS-latest
     name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-
     steps:
-      - uses: actions/checkout@v3
-      - name: Run tests
+      - uses: actions/checkout@v4
+      - name: Test
         run: cargo test --verbose
