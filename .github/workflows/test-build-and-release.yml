@@ -84,10 +84,34 @@ jobs:
           cd ../miners-windows-latest
           mv main.exe miners-windows.exe
           cd ../
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - name: Create Draft Release
+        uses: ncipollo/release-action@v1.12.0
         with:
-          tag_name: ${{ needs.tag.outputs.new_tag }}
-          files: miners-*/miners-*
-          body: ${{ needs.tag.outputs.changes }}
-          
+          prerelease: true
+          draft: false
+          commit: ${{ github.sha }}
+          name: ${{ steps.semver.outputs.next }}
+          tag: ${{ steps.semver.outputs.next }}
+          body: '*pending*'
+      - name: Update CHANGELOG
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.semver.outputs.next }}
+          writeToFile: false
+
+      - name: Update Release
+        uses: ncipollo/release-action@v1.12.0
+        with:
+          allowUpdates: true
+          draft: false
+          name: ${{ steps.semver.outputs.next }}
+          tag: ${{ steps.semver.outputs.next }}
+          body: |
+            ## What's Changed :eyes:
+    
+            ${{ steps.changelog.outputs.changes }}
+    
+            **Full Changelog**: https://github.com/czernika/tailwindcss-grid-area/compare//${{ steps.semver.outputs.current }}...${{ steps.semver.outputs.next }}
+          token: ${{ secrets.GITHUB_TOKEN }}
