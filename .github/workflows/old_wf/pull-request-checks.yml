@@ -1,16 +1,11 @@
-name: Pull Request Checks
+name: Check pull request
+
 on:
   pull_request:
-    types: [opened, synchronize]
+    types:
+      - opened
+      - synchronize
 
 jobs:
-  check-and-test:
-    name: Check and test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v3
-      - name: Check
-        run: cargo check
-      - name: Test
-        run: cargo test
+  Check-Test-and-Build:
+    uses: ./.github/workflows/check-test-and-build.yml
