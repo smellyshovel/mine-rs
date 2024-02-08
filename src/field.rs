@@ -308,7 +308,7 @@ impl Debug for Field {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         for row in self.grid.iter() {
             for cell in row {
-                write!(f, "{:?} ", cell)?;
+                write!(f, "{:?}", cell)?;
             }
 
             writeln!(f)?;
@@ -325,7 +325,7 @@ impl Display for Field {
                 f,
                 "{:^3}",
                 if i == 0 {
-                    "    0 ".to_string()
+                    "   0 ".to_string()
                 } else {
                     i.to_string()
                 }

@@ -154,7 +154,7 @@ impl Debug for Cell {
 
         match self.variant {
             CellVariant::Empty(n) => match n {
-                0 => write!(f, "⬜ "),
+                0 => write!(f, "⬜"),
                 1 => write!(f, "1️"),
                 2 => write!(f, "2️"),
                 3 => write!(f, "3️"),
@@ -180,7 +180,7 @@ impl Display for Cell {
                 if is_flagged {
                     write!(f, "🚩")
                 } else {
-                    write!(f, "⬛ ")
+                    write!(f, "⬛")
                 }
             }
             // The rest of the cases is successfully covered with the `Debug` trait's implementation.
