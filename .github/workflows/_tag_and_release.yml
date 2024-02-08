@@ -37,11 +37,11 @@ jobs:
           pattern: miners-*
       - name: Rename executables
         run: |
-          cd miners-Ubuntu-latest
+          cd miners-Ubuntu
           mv main miners-Ubuntu
-          cd ../miners-MacOS-latest
+          cd ../miners-MacOS
           mv main miners-MacOS
-          cd ../miners-Windows-latest
+          cd ../miners-Windows
           mv main.exe miners-Windows.exe
           cd ../
       - name: Create draft release
