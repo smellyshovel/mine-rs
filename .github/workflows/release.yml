@@ -10,7 +10,8 @@ jobs:
   Check-Test-and-Build:
     uses: ./.github/workflows/check-test-and-build.yml
   Tag:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs:
+      - Check-Test-and-Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
