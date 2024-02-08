@@ -17,9 +17,16 @@ jobs:
           - MacOS
         version:
           - latest
-    name: Build on ${{ matrix.os }}
+    name: Build for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-${{ matrix.version }}
     steps:
       - uses: actions/checkout@v4
       - name: Build
         run: cargo build --release --verbose
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4.3.0
+        with:
+          name: miners-${{ matrix.os }}
+          path: |
+            target/release/main
+            target/release/main.exe
