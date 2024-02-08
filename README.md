@@ -1,4 +1,4 @@
-[![Check, Test and Build](https://github.com/smellyshovel/mine_rs/actions/workflows/check-test-and-build.yml/badge.svg?event=push)](https://github.com/smellyshovel/mine_rs/actions/workflows/check-test-and-build.yml)
+[![Check, Test and Build](https://github.com/smellyshovel/mine-rs/actions/workflows/check-test-and-build.yml/badge.svg?event=push)](https://github.com/smellyshovel/mine-rs/actions/workflows/check-test-and-build.yml)
 
 # Mine RS
 
