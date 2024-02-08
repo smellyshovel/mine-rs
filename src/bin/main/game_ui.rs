@@ -1,7 +1,7 @@
 //! The game renderer functions.
 
 use crate::app::AppGame;
-use miners::{field::cell::Cell, MinesweeperStatus};
+use mine_rs::{field::cell::Cell, MinesweeperStatus};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     prelude::Frame,

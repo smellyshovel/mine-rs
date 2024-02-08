@@ -1,4 +1,4 @@
-use miners::{field::Field, Minesweeper, MinesweeperAction, MinesweeperStatus};
+use mine_rs::{field::Field, Minesweeper, MinesweeperAction, MinesweeperStatus};
 
 fn get_action() -> Option<MinesweeperAction> {
     println!("Enter the desired action and the target cell's coordinates (e.g. `f 3,5` to flag the 6th cell on the 4th line):");
