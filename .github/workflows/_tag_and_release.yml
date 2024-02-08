@@ -34,15 +34,15 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: miners-*
+          pattern: mine_rs-*
       - name: Rename executables
         run: |
-          cd miners-Ubuntu
-          mv main miners-Ubuntu
-          cd ../miners-MacOS
-          mv main miners-MacOS
-          cd ../miners-Windows
-          mv main.exe miners-Windows.exe
+          cd mine_rs-Ubuntu
+          mv main mine_rs-Ubuntu
+          cd ../mine_rs-MacOS
+          mv main mine_rs-MacOS
+          cd ../mine_rs-Windows
+          mv main.exe mine_rs-Windows.exe
           cd ../
       - name: Create draft release
         uses: ncipollo/release-action@v1.12.0
@@ -63,7 +63,7 @@ jobs:
       - name: Update release
         uses: ncipollo/release-action@v1.12.0
         with:
-          artifacts: miners-*/miners-*
+          artifacts: mine_rs-*/mine_rs-*
           allowUpdates: true
           draft: false
           name: ${{ needs.tag.outputs.next_tag }}
@@ -71,5 +71,5 @@ jobs:
           body: |
             ${{ steps.changelog.outputs.changes }}
 
-            **Full Changelog**: https://github.com/smellyshovel/miners/compare/${{ needs.tag.outputs.current_tag }}...${{ needs.tag.outputs.next_tag }}
+            **Full Changelog**: https://github.com/smellyshovel/mine_rs/compare/${{ needs.tag.outputs.current_tag }}...${{ needs.tag.outputs.next_tag }}
           token: ${{ secrets.GITHUB_TOKEN }}

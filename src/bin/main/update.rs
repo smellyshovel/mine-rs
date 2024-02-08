@@ -2,7 +2,7 @@
 
 use crate::app::App;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use miners::MinesweeperError;
+use mine_rs::MinesweeperError;
 
 /// The support for the app.rs controls. Each app.rs variant must know what to do when something's being requested.
 pub trait ControlsSupport {

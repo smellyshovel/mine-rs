@@ -6,8 +6,8 @@ use crate::game_ui::render_game;
 use crate::menu_ui::render_menu;
 use crate::tui::Render;
 use crate::update::{ControlsSupport, MoveCursorDirection};
-pub use miners::Minesweeper;
-use miners::{MinesweeperAction, MinesweeperError, MinesweeperStatus};
+pub use mine_rs::Minesweeper;
+use mine_rs::{MinesweeperAction, MinesweeperError, MinesweeperStatus};
 use ratatui::Frame;
 use std::cmp;
 
