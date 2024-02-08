@@ -11,8 +11,10 @@ jobs:
   Check:
     strategy:
       matrix:
-        os: 
+        os:
           - Ubuntu
+          - Windows
+          - MacOS
         version:
           - latest
     name: Check on ${{ matrix.os }}

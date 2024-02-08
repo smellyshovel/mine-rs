@@ -13,6 +13,8 @@ jobs:
       matrix:
         os:
           - Ubuntu
+          - Windows
+          - MacOS
         version:
           - latest
     name: Build for ${{ matrix.os }}

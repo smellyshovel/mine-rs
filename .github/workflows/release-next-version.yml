@@ -1,5 +1,5 @@
-name: Release
-run-name: Release
+name: Release Next Version
+run-name: Release Next Version
 
 on:
   push:
