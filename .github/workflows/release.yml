@@ -10,4 +10,6 @@ jobs:
   Check-Test-and-Build:
     uses: ./.github/workflows/check-test-and-build.yml
   Tag-and-Release:
-    uses: ./.github/workflows/tag_and_release.yml
+    needs:
+      - Check-Test-and-Build
+    uses: ./.github/workflows/_tag_and_release.yml
