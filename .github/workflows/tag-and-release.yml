@@ -2,13 +2,7 @@ name: Tag and Release
 run-name: Tag and Release
 
 on:
-  workflow_run:
-    workflows:
-      - Check, Test and Build
-    branches:
-      - main
-    types:
-      - completed
+  workflow_dispatch
 
 jobs:
   Tag:

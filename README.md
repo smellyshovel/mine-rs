@@ -1,4 +1,5 @@
-[![Test, Build and Release](https://github.com/smellyshovel/miners/actions/workflows/test-build-and-release.yml/badge.svg?branch=main)](https://github.com/smellyshovel/miners/actions/workflows/test-build-and-release.yml)
+[![Test](https://github.com/smellyshovel/miners/actions/workflows/test.yml/badge.svg)](https://github.com/smellyshovel/miners/actions/workflows/test.yml)
+[![Build](https://github.com/smellyshovel/miners/actions/workflows/build.yml/badge.svg)](https://github.com/smellyshovel/miners/actions/workflows/build.yml)
 
 # miners
 Minesweeper in Rust.
