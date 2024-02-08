@@ -1,7 +1,23 @@
-[![Test](https://github.com/smellyshovel/miners/actions/workflows/test.yml/badge.svg)](https://github.com/smellyshovel/miners/actions/workflows/test.yml)
-[![Build](https://github.com/smellyshovel/miners/actions/workflows/build.yml/badge.svg)](https://github.com/smellyshovel/miners/actions/workflows/build.yml)
+[![Check, Test and Build](https://github.com/smellyshovel/mine-rs/actions/workflows/check-test-and-build.yml/badge.svg?event=push)](https://github.com/smellyshovel/mine-rs/actions/workflows/check-test-and-build.yml)
 
-# miners
-Minesweeper in Rust.
+# Mine RS
 
-WIP
+An in-terminal Minesweeper implementation in Rust.
+
+![Gameplay Preview](https://raw.githubusercontent.com/smellyshovel/mine-rs/dev/.github/workflows/_build.yml)
+
+## Usage
+
+1. Download the latest version for your OS from the [releases](https://github.com/smellyshovel/mine-rs/releases) page
+2. Make the file executable, e.g., for Ubuntu
+    ```
+   chmod +x mine-rs-Ubuntu
+   ```
+3. Run the file as a regular executable program
+    ```
+   ./mine-rs-Ubuntu
+   ```
+
+## Features
+
+All the game logic is written as a library, so that it could support multiple frontends. At the moment, there are two: `debug_main` (text-based) and `main` (TUI).
