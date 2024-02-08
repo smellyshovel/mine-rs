@@ -2,7 +2,9 @@ name: Release
 run-name: Release
 
 on:
-  workflow_dispatch
+  push:
+    branches:
+      - main
 
 jobs:
   Check-Test-and-Build:

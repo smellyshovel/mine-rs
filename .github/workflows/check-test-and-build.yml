@@ -4,7 +4,10 @@ run-name: Check, Test and Build
 on:
   push:
     branches:
+      - *
+    branches-ignore:
       - main
+  workflow_call:
 
 env:
   CARGO_TERM_COLOR: always
