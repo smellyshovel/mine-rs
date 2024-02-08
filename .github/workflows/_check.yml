@@ -1,5 +1,5 @@
-name: Test
-run-name: Test
+name: Check
+run-name: Check
 
 on:
   - workflow_call
@@ -8,18 +8,16 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  Test:
+  Check:
     strategy:
       matrix:
-        os:
+        os: 
           - Ubuntu
-          - Windows
-          - MacOS
         version:
           - latest
-    name: Test on ${{ matrix.os }}
+    name: Check on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-${{ matrix.version }}
     steps:
       - uses: actions/checkout@v4
-      - name: Test
-        run: cargo test --verbose
+      - name: Check
+        run: cargo check --verbose

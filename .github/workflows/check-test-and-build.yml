@@ -7,17 +7,14 @@ on:
       - main
   workflow_call:
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   Check:
-    uses: ./.github/workflows/check.yml
+    uses: ./.github/workflows/_check.yml
   Test:
     needs:
       - Check
-    uses: ./.github/workflows/test.yml
+    uses: ./.github/workflows/_test.yml
   Build:
     needs:
       - Check
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/_build.yml
