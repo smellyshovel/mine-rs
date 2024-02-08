@@ -434,45 +434,6 @@ mod test {
         assert!(result.is_err_and(|err| err == FieldError::MinesAlreadyExist));
     }
 
-    fn create_stub_mined_field(enlarged: bool) -> Field {
-        // "mine", "mine", "none"
-        // "none", "none", "mine"
-        // "none", "none", "none"
-        // "none", "none", "none" <- only when enlarged
-        let mut grid = vec![
-            vec![
-                {
-                    let mut cell = Cell::new((0, 0));
-                    cell.mine();
-                    cell
-                },
-                {
-                    let mut cell = Cell::new((0, 1));
-                    cell.mine();
-                    cell
-                },
-                Cell::new((0, 2)),
-            ],
-            vec![Cell::new((1, 0)), Cell::new((1, 1)), {
-                let mut cell = Cell::new((1, 2));
-                cell.mine();
-                cell
-            }],
-            vec![Cell::new((2, 0)), Cell::new((2, 1)), Cell::new((2, 2))],
-        ];
-
-        if enlarged {
-            // Add a row of empty cells.
-            let empty_row = vec![Cell::new((3, 0)), Cell::new((3, 1)), Cell::new((3, 2))];
-            grid.push(empty_row);
-        }
-
-        Field {
-            grid,
-            mines_amount: 3,
-        }
-    }
-
     #[test]
     fn mines_around_values_get_updated_correctly() {
         let mut field = create_stub_mined_field(false);
@@ -764,5 +725,47 @@ mod test {
                 .len(),
             2
         );
+    }
+
+    // helpers
+
+    // See the `/misc/stub_field_representation.png`.
+    fn create_stub_mined_field(enlarged: bool) -> Field {
+        // "mine", "mine", "none"
+        // "none", "none", "mine"
+        // "none", "none", "none"
+        // "none", "none", "none" <- only when enlarged
+        let mut grid = vec![
+            vec![
+                {
+                    let mut cell = Cell::new((0, 0));
+                    cell.mine();
+                    cell
+                },
+                {
+                    let mut cell = Cell::new((0, 1));
+                    cell.mine();
+                    cell
+                },
+                Cell::new((0, 2)),
+            ],
+            vec![Cell::new((1, 0)), Cell::new((1, 1)), {
+                let mut cell = Cell::new((1, 2));
+                cell.mine();
+                cell
+            }],
+            vec![Cell::new((2, 0)), Cell::new((2, 1)), Cell::new((2, 2))],
+        ];
+
+        if enlarged {
+            // Add a row of empty cells.
+            let empty_row = vec![Cell::new((3, 0)), Cell::new((3, 1)), Cell::new((3, 2))];
+            grid.push(empty_row);
+        }
+
+        Field {
+            grid,
+            mines_amount: 3,
+        }
     }
 }
